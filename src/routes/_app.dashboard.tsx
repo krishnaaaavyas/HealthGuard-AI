@@ -8,11 +8,13 @@ import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   ArrowRight,
   Brain,
   Download,
   TrendingDown,
+  Info,
 } from "lucide-react";
 import jsPDF from "jspdf";
 
@@ -333,9 +335,9 @@ function Dashboard() {
         : CHART_RED;
 
   return (
-    <div className="mx-auto max-w-[1440px] px-6 py-10">
+    <div className="mx-auto max-w-[1440px] px-6 py-10 space-y-6">
       {/* Dashboard Header Banner */}
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Badge variant="secondary" className="rounded-full">
             Clinical Assessment Portal
@@ -348,12 +350,44 @@ function Dashboard() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
+          <Button asChild variant="outline" className="border-teal/30 hover:bg-teal/5 text-teal hover:text-teal font-semibold">
+            <Link to="/simulator">Action Impact Explorer</Link>
+          </Button>
           <Button asChild variant="outline">
             <Link to="/assessment">Re-run Assessment</Link>
           </Button>
           <Button onClick={download} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer">
             <Download className="h-4 w-4" /> Download Report
           </Button>
+        </div>
+      </div>
+
+      {/* Onboarding Roadmap Hero */}
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-teal/10 via-primary/5 to-surface border border-teal/10">
+        <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+          Your Health Journey
+        </h2>
+        <p className="text-xs text-muted-foreground mt-1 mb-4">
+          Follow this guided path to manage and optimize your preventive healthcare metrics:
+        </p>
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-5">
+          {[
+            { step: "1", title: "Assess", desc: "Complete Assessment", to: "/assessment" },
+            { step: "2", title: "Understand Risk", desc: "Review Risk Drivers", to: "/dashboard" },
+            { step: "3", title: "Take Action", desc: "Follow Action Plan", to: "/action-plan" },
+            { step: "4", title: "Scan Foods", desc: "Scan packaged food", to: "/scanner" },
+            { step: "5", title: "Track Progress", desc: "Log Weight & Vitals", to: "/progress" },
+          ].map((item) => (
+            <Link
+              key={item.step}
+              to={item.to}
+              className="flex flex-col p-3.5 rounded-xl border border-border/60 bg-surface/50 hover:bg-teal/5 hover:border-teal/20 transition-all"
+            >
+              <span className="font-display text-lg font-black text-teal/80">0{item.step}</span>
+              <span className="text-xs font-bold text-foreground mt-1 leading-snug">{item.title}</span>
+              <span className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{item.desc}</span>
+            </Link>
+          ))}
         </div>
       </div>
 
@@ -400,8 +434,20 @@ function Dashboard() {
           <Card className="border-border bg-surface shadow-card-soft">
             <CardContent className="p-6 flex flex-col justify-between h-full">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
-                  Overall Risk
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
+                  <span>Overall Risk</span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" className="text-muted-foreground/60 hover:text-foreground cursor-pointer">
+                          <Info className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[220px] p-2 bg-popover text-popover-foreground text-xs rounded border border-border shadow-md">
+                        Calculated using FINDRISC and cardiovascular risk scoring models.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <div className="mt-4 flex items-baseline gap-2">
                   <span
@@ -523,28 +569,40 @@ function Dashboard() {
                     return (
                       <div
                         key={action.id}
-                        className="flex items-center gap-3 rounded-lg border border-border bg-surface-muted/50 p-2.5 hover:bg-accent/20 transition-colors"
+                        className="flex flex-col rounded-lg border border-border bg-surface-muted/50 p-2.5 hover:bg-accent/20 transition-colors"
                       >
-                        {/* Rank */}
-                        <div className={`text-base font-bold w-5 shrink-0 ${rankColors[idx]}`}>
-                          {idx + 1}
-                        </div>
-                        {/* Icon + Title */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-sm">{action.icon}</span>
-                            <p className="text-xs font-semibold text-foreground truncate">{action.title}</p>
+                        <div className="flex items-center gap-3">
+                          {/* Rank */}
+                          <div className={`text-base font-bold w-5 shrink-0 ${rankColors[idx]}`}>
+                            {idx + 1}
                           </div>
-                          {/* Risk arrow */}
-                          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground font-mono">
-                            <span className="font-semibold" style={{ color: colorFor(action.currentRisk) }}>{action.currentRisk}%</span>
-                            <span>→</span>
-                            <span className="font-semibold text-teal">{action.projectedRisk}%</span>
+                          {/* Icon + Title */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm">{action.icon}</span>
+                              <p className="text-xs font-semibold text-foreground truncate">{action.title}</p>
+                            </div>
+                            {/* Risk arrow */}
+                            <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground font-mono">
+                              <span className="font-semibold" style={{ color: colorFor(action.currentRisk) }}>{action.currentRisk}%</span>
+                              <span>→</span>
+                              <span className="font-semibold text-teal">{action.projectedRisk}%</span>
+                            </div>
+                          </div>
+                          {/* Reduction badge */}
+                          <div className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${badgeColors[idx]}`}>
+                            -{action.absoluteReduction} pts
                           </div>
                         </div>
-                        {/* Reduction badge */}
-                        <div className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${badgeColors[idx]}`}>
-                          -{action.absoluteReduction} pts
+
+                        {/* Explainability Nudge (Step 3 of 11B) */}
+                        <div className="mt-2 text-[10px] text-muted-foreground border-t border-border/30 pt-1.5">
+                          <span className="font-bold text-teal">Why?</span> {
+                            action.id === "exercise_30_min" ? "Sedentary lifestyle contributes to high diabetic and vascular indicators." :
+                            action.id === "lose_5kg" ? "Reducing body weight reduces loading strain on your cardiovascular system." :
+                            action.id === "improve_sleep" ? "Optimal sleep periods promote glycemic control and hormone balancing." :
+                            "Lifestyle adjustments reduce chronic physiological stresses."
+                          }
                         </div>
                       </div>
                     );
@@ -554,11 +612,16 @@ function Dashboard() {
                 <div className="space-y-2.5">
                   {result.actionPriorities && result.actionPriorities.length > 0 ? (
                     result.actionPriorities.slice(0, 3).map((p, i) => (
-                      <div key={i} className="flex items-start gap-2.5 rounded-lg border border-border bg-surface-muted/65 p-2.5">
-                        <TrendingDown className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal" />
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-foreground">{p.action}</p>
-                          <p className="text-[10px] text-teal mt-0.5">↓ {Math.abs(p.estimatedImpact)} pts estimated</p>
+                      <div key={i} className="flex flex-col rounded-lg border border-border bg-surface-muted/65 p-2.5">
+                        <div className="flex items-start gap-2.5">
+                          <TrendingDown className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-foreground">{p.action}</p>
+                            <p className="text-[10px] text-teal mt-0.5">↓ {Math.abs(p.estimatedImpact)} pts estimated</p>
+                          </div>
+                        </div>
+                        <div className="mt-2 text-[10px] text-muted-foreground border-t border-border/30 pt-1.5">
+                          <span className="font-bold text-teal">Why?</span> Action targets your main clinical risk metrics.
                         </div>
                       </div>
                     ))
@@ -585,11 +648,11 @@ export function EmptyState() {
       <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-accent text-teal shadow-card-soft">
         <ArrowRight className="h-7 w-7 text-teal" />
       </div>
-      <h1 className="mt-6 font-display text-3xl font-bold tracking-tight text-foreground">
-        Welcome to HealthGuard AI Portal
+      <h1 className="mt-6 font-display text-2xl font-bold tracking-tight text-foreground">
+        Complete assessment to generate your health profile
       </h1>
-      <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-md">
-        Complete your health assessment to unlock your personalized dashboard.
+      <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-md">
+        Answer a few clinical and lifestyle questions to view your personalized health dashboard.
       </p>
 
       <Button

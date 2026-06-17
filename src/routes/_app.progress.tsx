@@ -1,19 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
 import {
   Calendar,
   Weight,
   Target,
   TrendingDown,
-  Sparkles,
   Activity,
   ArrowRight,
   Plus,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/auth-context";
 import { useProfile, useHealthResult, useHistory } from "@/lib/health-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -81,47 +78,9 @@ function ProgressPage() {
   const [logWeightVal, setLogWeightVal] = useState("");
   const [logging, setLogging] = useState(false);
 
-  // AI progress review states
-  const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewData, setReviewData] = useState<{
-    review: string;
-    coaching: string;
-    milestones: any[];
-  } | null>(null);
-
   useEffect(() => {
     document.title = "Progress Tracking — HealthGuard";
   }, []);
-
-  // Fetch AI progress review if we have at least 3 history items
-  useEffect(() => {
-    if (!result || history.length < 3) return;
-    const fetchReview = async () => {
-      setReviewLoading(true);
-      try {
-        let idToken = "mock-uid-guest";
-        if (auth.currentUser) {
-          idToken = await auth.currentUser.getIdToken();
-        }
-        const response = await fetch(`${API_URL}/api/progress/review`, {
-          headers: {
-            "Authorization": `Bearer ${idToken}`
-          }
-        });
-        if (response.ok) {
-          const resJson = await response.json();
-          if (resJson.success) {
-            setReviewData(resJson.data);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch progress review:", err);
-      } finally {
-        setReviewLoading(false);
-      }
-    };
-    fetchReview();
-  }, [result, history.length]);
 
   if (!profile || !result) {
     return (
@@ -215,7 +174,7 @@ function ProgressPage() {
           Progress Tracker
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-relaxed">
-          Log weight and view clinical risk improvements. Log regularly to generate longitudinal AI trends.
+          Log weight and track clinical risk improvements over time.
         </p>
       </div>
 
@@ -302,83 +261,14 @@ function ProgressPage() {
         <Card className="border-border border-dashed bg-surface shadow-card-soft p-8 text-center flex flex-col items-center justify-center min-h-[250px]">
           <Activity className="h-10 w-10 text-teal/40 mb-3" />
           <h3 className="font-display text-sm font-bold text-foreground">
-            Not enough history yet
+            Progress history unavailable
           </h3>
           <p className="text-xs text-muted-foreground mt-1 max-w-xs leading-relaxed">
-            Log your weight or complete another assessment to unlock trends. We require at least 3 points of data history to plot graphs and run AI analysis.
+            Complete additional assessments to unlock trend analysis.
           </p>
         </Card>
       ) : (
         <div className="space-y-8">
-          {/* AI progress review */}
-          {reviewLoading && (
-            <Card className="border-border bg-surface shadow-card-soft p-6 flex items-center justify-center">
-              <div className="flex items-center gap-3">
-                <Loader2 className="h-5 w-5 animate-spin text-teal" />
-                <span className="text-xs text-muted-foreground font-semibold">Analyzing progress trends with AI Coach...</span>
-              </div>
-            </Card>
-          )}
-
-          {!reviewLoading && reviewData && (
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-accent/5 to-surface shadow-card-soft overflow-hidden md:col-span-2 relative">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal via-primary to-accent" />
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                      <Sparkles className="h-5 w-5 animate-pulse" />
-                    </div>
-                    <div>
-                      <CardTitle className="font-display text-base text-foreground font-bold">AI Progress Insights</CardTitle>
-                      <p className="text-xs text-muted-foreground">Personalized longitudinal wellness assessment</p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2 pt-3">
-                  <div className="rounded-lg border border-border/40 bg-surface/50 p-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-primary">Trend Analysis Summary</h4>
-                    <p className="mt-1.5 text-xs leading-relaxed text-foreground font-medium">
-                      {reviewData.review}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border/40 bg-surface/50 p-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-accent-foreground">Adapted Coaching & Strategy</h4>
-                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground font-medium">
-                      {reviewData.coaching}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Milestones Card */}
-              {reviewData.milestones && reviewData.milestones.length > 0 && (
-                <Card className="border-border shadow-card-soft md:col-span-2">
-                  <CardHeader className="pb-2 border-b border-border/40">
-                    <CardTitle className="font-display text-sm font-bold text-foreground">Unlocked Health Milestones</CardTitle>
-                    <p className="text-xs text-muted-foreground">Celebrate your preventive health accomplishments</p>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="flex flex-wrap gap-3">
-                      {reviewData.milestones.map((m: any) => (
-                        <div
-                          key={m.id}
-                          className="flex items-center gap-2.5 rounded-full border border-green-500/20 bg-green-500/5 px-4 py-2 text-green-600 shadow-sm transition-all hover:scale-105 hover:bg-green-500/10"
-                        >
-                          <span className="text-lg">🎉</span>
-                          <div className="text-left">
-                            <p className="text-xs font-bold leading-none">{m.title}</p>
-                            <p className="text-[10px] text-green-600/80 mt-0.5 font-medium">{m.description}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
-
           {/* Charts Grid */}
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Weight Chart */}

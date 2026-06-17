@@ -18,6 +18,7 @@ import { Route as ClinicalSourcesRouteImport } from './routes/clinical-sources'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSimulatorRouteImport } from './routes/_app.simulator'
 import { Route as AppScannerRouteImport } from './routes/_app.scanner'
 import { Route as AppReportRouteImport } from './routes/_app.report'
 import { Route as AppProgressRouteImport } from './routes/_app.progress'
@@ -69,6 +70,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSimulatorRoute = AppSimulatorRouteImport.update({
+  id: '/simulator',
+  path: '/simulator',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppScannerRoute = AppScannerRouteImport.update({
   id: '/scanner',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/progress': typeof AppProgressRoute
   '/report': typeof AppReportRoute
   '/scanner': typeof AppScannerRoute
+  '/simulator': typeof AppSimulatorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/progress': typeof AppProgressRoute
   '/report': typeof AppReportRoute
   '/scanner': typeof AppScannerRoute
+  '/simulator': typeof AppSimulatorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/_app/progress': typeof AppProgressRoute
   '/_app/report': typeof AppReportRoute
   '/_app/scanner': typeof AppScannerRoute
+  '/_app/simulator': typeof AppSimulatorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/report'
     | '/scanner'
+    | '/simulator'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/report'
     | '/scanner'
+    | '/simulator'
   id:
     | '__root__'
     | '/'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/_app/progress'
     | '/_app/report'
     | '/_app/scanner'
+    | '/_app/simulator'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -291,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/simulator': {
+      id: '/_app/simulator'
+      path: '/simulator'
+      fullPath: '/simulator'
+      preLoaderRoute: typeof AppSimulatorRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/scanner': {
       id: '/_app/scanner'
       path: '/scanner'
@@ -351,6 +370,7 @@ interface AppRouteChildren {
   AppProgressRoute: typeof AppProgressRoute
   AppReportRoute: typeof AppReportRoute
   AppScannerRoute: typeof AppScannerRoute
+  AppSimulatorRoute: typeof AppSimulatorRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -361,6 +381,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProgressRoute: AppProgressRoute,
   AppReportRoute: AppReportRoute,
   AppScannerRoute: AppScannerRoute,
+  AppSimulatorRoute: AppSimulatorRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

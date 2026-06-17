@@ -734,11 +734,10 @@ function ScannerPage() {
                   <ScanLine className="h-6 w-6" />
                 </div>
                 <h3 className="font-display text-base font-bold text-foreground">
-                  Waiting for Ingredient Scan
+                  No foods scanned yet
                 </h3>
                 <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
-                  Select an Indian food preset above, upload a label photo, or type raw ingredients
-                  to receive an immediate clinical wellness analysis.
+                  Upload a food label to receive personalized health insights.
                 </p>
               </div>
             </Card>
