@@ -6,7 +6,7 @@ import {
 } from "@/lib/health-store";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -62,7 +62,7 @@ function Dashboard() {
   const [result, setResult] = useHealthResult();
   const [profile, setProfile] = useProfile();
 
-  const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   // Action Impact Engine State
   interface ActionImpact {

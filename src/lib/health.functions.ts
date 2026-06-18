@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { auth } from "./firebase";
 
-const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const InputSchema = z.object({
   age: z.number().min(1).max(120),

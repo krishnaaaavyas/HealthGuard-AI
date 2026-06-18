@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -30,6 +30,7 @@ function ProfilePage() {
   }, []);
 
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [assessmentStatus, setAssessmentStatus] = useState<{
     hasCompletedAssessment: boolean;
@@ -174,40 +175,42 @@ function ProfilePage() {
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-teal/80">
               Health Profile Onboarding
             </h3>
-            <div className="rounded-xl border border-border bg-surface-muted/30 p-4 space-y-3.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                  <ClipboardList className="h-4 w-4 text-teal" /> Onboarding Status
-                </span>
-                {loadingStatus ? (
-                  <Loader2 className="h-3 w-3 animate-spin text-teal" />
-                ) : (
-                  <Badge className="bg-teal/15 text-teal hover:bg-teal/15 border-teal/10 font-bold rounded-full text-[10px] uppercase">
-                    {assessmentStatus?.hasCompletedAssessment ? "Completed" : "Pending"}
-                  </Badge>
-                )}
-              </div>
-              <div className="text-[11px] text-muted-foreground leading-normal space-y-1">
+            <Card className="border border-border bg-surface-muted/20 shadow-none">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <ClipboardList className="h-4 w-4 text-teal" /> Onboarding Status
+                  </span>
+                  {loadingStatus ? (
+                    <Loader2 className="h-3 w-3 animate-spin text-teal" />
+                  ) : (
+                    <Badge className="bg-teal/15 text-teal hover:bg-teal/15 border-teal/10 font-bold rounded-full text-[10px] uppercase">
+                      {assessmentStatus?.hasCompletedAssessment ? "Completed" : "Pending"}
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="p-4 pt-0 pb-3 text-xs text-muted-foreground leading-normal">
                 <p>
-                  {assessmentStatus?.hasCompletedAssessment
-                    ? "Your baseline risk drivers and customized wellness plans are active."
-                    : "Please complete your initial assessment to generate your risk profile."}
+                  Your assessment is used to calculate risk scores and personalize your action plan.
                 </p>
                 {assessmentStatus?.lastAssessmentUpdate && (
                   <p className="text-[10px] text-muted-foreground/80 mt-1 font-mono">
                     Last Updated: {formatDate(assessmentStatus.lastAssessmentUpdate)}
                   </p>
                 )}
-              </div>
-              <Button
-                asChild
-                className="w-full bg-teal text-white hover:bg-teal/95 font-bold text-xs h-9 cursor-pointer"
-              >
-                <Link to="/assessment">
+              </CardContent>
+
+              <CardFooter className="p-4 pt-0">
+                <Button
+                  onClick={() => navigate({ to: "/assessment" })}
+                  className="w-full bg-teal text-white hover:bg-teal/95 font-bold text-xs h-9 cursor-pointer"
+                >
                   {assessmentStatus?.hasCompletedAssessment ? "Reassess Health Profile" : "Start Initial Assessment"}
-                </Link>
-              </Button>
-            </div>
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
 
           {/* Quick Actions */}

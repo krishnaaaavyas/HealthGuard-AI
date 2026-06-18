@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_app/expert-review")({
   component: ExpertReviewPage,
 });
 
-const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // Real-time listener subscription helper
 function subscribeToMessages(requestId: string, onUpdate: (messages: any[]) => void) {

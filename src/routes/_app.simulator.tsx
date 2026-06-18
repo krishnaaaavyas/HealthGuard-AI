@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_app/simulator")({
   component: ActionImpactExplorerPage,
 });
 
-const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const CHART_AMBER = "oklch(0.74 0.15 70)";
 const CHART_RED = "oklch(0.58 0.21 25)";

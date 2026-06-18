@@ -11,6 +11,8 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { isConfigured, db, auth } from "@/lib/firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -97,6 +99,24 @@ function AssessmentPage() {
         weightKg: values.weightKg,
         risks: res.risk,
       });
+
+      // Write onboarding status flag to firestore users collection
+      if (isConfigured && auth.currentUser) {
+        try {
+          await setDoc(
+            doc(db, "users", auth.currentUser.uid),
+            {
+              hasCompletedAssessment: true,
+              assessmentCompletedAt: serverTimestamp(),
+              lastAssessmentUpdatedAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+        } catch (dbErr) {
+          console.warn("Failed to write onboarding status to Firestore:", dbErr);
+        }
+      }
+
       toast.success("Assessment complete");
       navigate({ to: "/dashboard" });
     } catch (e) {

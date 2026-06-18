@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_app/progress")({
   component: ProgressPage,
 });
 
-const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const CHART_NAVY = "oklch(0.27 0.07 258)";
 const CHART_TEAL = "oklch(0.55 0.09 200)";
 

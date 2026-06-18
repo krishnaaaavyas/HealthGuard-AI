@@ -29,7 +29,7 @@ export const Route = createFileRoute("/expert-dashboard")({
   component: ExpertDashboardPage,
 });
 
-const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // Message Subscription
 function subscribeToMessages(requestId: string, onUpdate: (messages: any[]) => void) {

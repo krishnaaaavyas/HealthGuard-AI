@@ -2,67 +2,76 @@
 
 ### AI-Powered Preventive Health Awareness & Risk Assessment Portal
 
-HealthGuard AI is a modern, patient-first web application designed to help individuals evaluate their metabolic and cardiovascular risk factors before symptoms manifest. Leveraging **Gemini AI**, evidence-based clinical guidelines, and a beautiful, high-performance user interface, HealthGuard AI empowers users to identify chronic health risks (Type 2 Diabetes, Hypertension, and Heart Disease) in under 10 minutes and receive immediate, regionalized, and actionable lifestyle guidance.
+HealthGuard AI is a modern, patient-first web application designed to help individuals evaluate their metabolic and cardiovascular risk factors before symptoms manifest. Leveraging **Gemini AI**, evidence-based clinical guidelines, and a beautiful, high-performance user interface, HealthGuard AI empowers users to identify chronic health risks (Type 2 Diabetes, Hypertension, and Heart Disease) in under 10 minutes and receive immediate, personalized, and actionable lifestyle guidance.
 
 ---
 
 ## 🌟 Key Features
 
-### 📋 1. On-Device Clinical Assessment
+### 📋 1. Guided One-Time Health Assessment (Onboarding)
 
-- A 10-minute questionnaire mapping demographic and physical parameters (age, gender, height, weight, smoking habits, exercise, family history, and symptoms).
-- Client-side data safety: all assessments are stored securely in local storage or synced optionally with **Firebase**.
+- First-time users are automatically redirected to a multi-step health questionnaire on signup/login.
+- Once completed, returning users skip directly to the dashboard — no repeated questionnaires.
+- Assessment covers: age, gender, height, weight, smoking, exercise, alcohol, family history, and current symptoms.
+- Reassessment is available at any time from the **Profile** page.
 
-### 📊 2. Interactive Risk Dashboard
+### 📊 2. Intelligent Risk Dashboard
 
-- **Clinical Risk Math**: Computes scores using established deterministic equations (**FINDRISC** for Type 2 Diabetes and **Framingham General Cardiovascular Risk** index for Heart Disease and Hypertension) for maximum accuracy and clinical transparency.
-- **Vibrant Risk Visualizations**: Incorporates clean, responsive radial bar charts and longitudinal trend projections powered by **Recharts**.
-- **Progress Logs**: Allows tracking of body weight, BMI, and overall scores over time.
+- **Clinical Risk Math**: Computes scores using **FINDRISC** (Type 2 Diabetes) and **Framingham** (Heart Disease & Hypertension) equations for clinical transparency.
+- **Action Impact Engine**: Tests multiple realistic lifestyle changes, recalculates risk for each, and ranks them by impact. The dashboard says *"Exercise 30 min/day can reduce your risk by 19%"* — not just a number.
+- **Risk Driver Analysis**: Breaks down risk into weighted contributors (e.g. Sedentary Lifestyle 38%, BMI 27%) so users understand *why* their risk is high.
+- **Dynamic Journey Card**: Shows assessment completion status, recommended next step, and profile age.
 
-### 🍱 3. Bespoke Diet & Activity Plans
+### 🍱 3. Personalized Action Plan
 
-- Generates weekly customized meal plans tailored to regional cuisine preferences (e.g., Indian Vegetarian / Non-Vegetarian) and available in multiple languages (**English, Hindi, Gujarati**).
-- Recommends structured physical activity plans based on current fitness level (**Beginner / Intermediate / Advanced**).
+- AI-generated weekly meal and activity plans tuned to regional cuisine (Indian veg/non-veg) and fitness level.
+- Supports **English, Hindi, and Gujarati** language output.
 
-### 🔍 4. Smart Ingredient Scanner
+### 🔍 4. Smart Food Scanner
 
-- **Gemini Multimodal OCR**: Captures food packaging photos (via drag-and-drop or **live webcam capture**) and uses Gemini's vision capability to isolate and parse standard ingredients.
-- **Health Score (1–10)**: Analyzes healthy vs. concerning chemical additives, presenting detailed glycemic (Diabetes), vascular (Hypertension), and cardiac impacts.
-- Includes popular preset profiles for local context (e.g., _Maggi Noodles, Coca-Cola, Lay's Chips, Amul Dahi, Roasted Chana_).
-- Offline fallback keyword evaluator checks ingredients locally if connection or API is unavailable.
+- **Gemini Multimodal OCR**: Parses food packaging photos (drag-and-drop or live webcam) and extracts ingredients.
+- **Personalized Impact**: Scores each food item against the user's specific risk profile — not generic nutrition advice.
+- **Health Score (1–10)**: Reports glycemic (Diabetes), vascular (Hypertension), and cardiac impact separately.
+- Offline fallback keyword evaluator when API is unavailable.
 
-### 📄 5. Clinician-Friendly Reports
+### 🩺 5. Human Expert Review
 
-- Generates clean, downloadable PDF summaries using `jsPDF` that users can print, email, or upload to their hospital patient portals.
+- Users can request their health summary be reviewed by a clinical expert.
+- Real-time expert chat powered by **Firestore listeners** (with polling fallback).
+- Expert portal at `/expert-dashboard` shows pending patient requests with full risk snapshots.
+- Supports mock expert registration for development/demo environments.
 
-### 🛡️ 6. Post-Generation Safety Guardrails
+### 📄 6. Clinician-Friendly PDF Reports
 
-- Runs a real-time regex/word-matching validator on all AI recommendations to detect and redact potential diagnosis assertions or specific pharmaceutical drug prescriptions, ensuring the advice remains educational and safe.
+- Downloadable PDF health summaries via `jsPDF` for hospital portals or personal records.
 
-### 🔄 7. What-If Health Decision Simulator
+### 🛡️ 7. Post-Generation Safety Guardrails
 
-- **Transient Projections**: Allows users to simulate lifestyle modifications (target weight, sleep hours, fitness frequency, smoking status, alcohol habits) and view estimated drops in chronic condition risks instantly.
-- **Explainable Delta Analytics**: Isolates individual factor contributions, highlights condition-level risk deltas, and stores simulation query parameters inside Firestore `simulations` collection for future analysis.
-- **Proactive Dashboard Widgets**: Displays potential risk drops dynamically inside the main dashboard Summary tab.
+- Regex/word-matching validator on all AI recommendations redacts diagnosis assertions and drug prescription language, keeping all content strictly educational.
 
 ---
 
 ## 🛠️ Tech Stack & Architecture
 
-### Frontend Core
+### Frontend
 
-- **Vite & React 19**: Lightning-fast, modern component structure.
-- **TypeScript**: Full static typing for safety and robust refactoring.
-- **TanStack Router**: Scalable, file-based routing.
-- **Tailwind CSS v4**: Beautiful, utility-first styling with smooth micro-animations.
-- **Radix UI Primitives**: Accessible UI components.
+| Layer | Technology |
+|---|---|
+| Framework | Vite + React 19 + TypeScript |
+| Routing | TanStack Router (file-based) |
+| Styling | Tailwind CSS v4 + Radix UI primitives |
+| Charts | Recharts |
+| Reports | jsPDF |
+| Auth / DB | Firebase client SDK (Auth + Firestore) |
 
-### AI & Backend Integration
+### Backend (`/backend`)
 
-- **Gemini API (`gemini-2.5-flash`)**: Used for structured, multilingual content generation matching rigorous Zod validation schemas.
-- **Firebase Core & Firestore**: Secure customer login (Google Auth / Email) and cloud storage sync.
-- **Recharts**: Advanced data visualization library.
-- **i18n Dictionary**: Multi-lingual dictionary supporting localized translations in Hindi and Gujarati.
+| Layer | Technology |
+|---|---|
+| Server | Express.js + TypeScript (`tsx watch`) |
+| Auth | Firebase Admin SDK (+ mock fallback) |
+| AI | Gemini API `gemini-2.5-flash` |
+| Validation | Zod |
 
 ---
 
@@ -72,33 +81,42 @@ HealthGuard AI is a modern, patient-first web application designed to help indiv
 healthguard-ai/
 ├── src/
 │   ├── components/
-│   │   ├── ui/               # Radix UI primitives (sidebar, buttons, etc.)
-│   │   ├── marketing/        # Header, footer, and landing page elements
-│   │   ├── app-sidebar.tsx   # Portal sidebar navigation
-│   │   └── language-switcher.tsx # Localized translation switcher
+│   │   ├── ui/                    # Radix UI primitives
+│   │   ├── app-sidebar.tsx        # Sidebar: Dashboard, Food Scanner, Action Plan, Progress, Expert Review, Profile
+│   │   └── language-switcher.tsx
 │   ├── contexts/
-│   │   └── auth-context.tsx  # Firebase login & verification state
-│   ├── hooks/
-│   │   └── use-mobile.tsx    # Mobile responsiveness hooks
+│   │   └── auth-context.tsx       # Firebase auth state + backend sync
 │   ├── lib/
-│   │   ├── firebase.ts       # Firebase config and local fallbacks
-│   │   ├── health-store.ts   # LocalStorage & sync helper functions
-│   │   ├── health.functions.ts # Gemini API integration & schema validations
-│   │   └── i18n.ts           # Translation dictionaries (EN, HI, GU)
-│   ├── routes/
-│   │   ├── _app.tsx          # Main authenticated layout routing wrapper
-│   │   ├── _app.dashboard.tsx # Dashboard, charts, plans, and logging
-│   │   ├── _app.assessment.tsx# Multi-step demographic questionnaire
-│   │   ├── _app.scanner.tsx  # Food label ingredient analyzer
-│   │   ├── _app.report.tsx   # PDF download & medical details
-│   │   ├── index.tsx         # Landing marketing page
-│   │   └── __root.tsx        # Application root context and boundary shell
-│   ├── styles.css            # Base Tailwind and visual variable system
-│   └── main.tsx              # React mounting entrypoint
-├── public/                   # Static assets & media
-├── package.json              # Dependency manifests
-├── vite.config.ts            # Vite & TanStack Router configurations
-└── tsconfig.json             # TypeScript compile options
+│   │   ├── firebase.ts            # Firebase config + local fallback
+│   │   ├── health-store.ts        # LocalStorage + cloud sync helpers
+│   │   ├── health.functions.ts    # Gemini API integration + schema validation
+│   │   └── i18n.ts                # EN / HI / GU translations
+│   └── routes/
+│       ├── _app.tsx               # Auth layout + onboarding redirect guard
+│       ├── _app.dashboard.tsx     # Risk dashboard + action impacts + drivers
+│       ├── _app.assessment.tsx    # Multi-step onboarding questionnaire
+│       ├── _app.scanner.tsx       # Food label scanner
+│       ├── _app.action-plan.tsx   # Personalized lifestyle plan
+│       ├── _app.progress.tsx      # Historical risk tracking
+│       ├── _app.expert-review.tsx # Patient expert request + real-time chat
+│       ├── _app.profile.tsx       # User profile + reassessment trigger
+│       ├── expert-dashboard.tsx   # Expert (doctor) portal
+│       └── index.tsx              # Marketing landing page
+├── backend/
+│   └── src/
+│       ├── server.ts                    # Express routes + middleware
+│       ├── firebase-admin.ts            # Admin SDK + mock in-memory fallback
+│       ├── middleware/auth.ts           # Token verification (real + mock)
+│       └── services/
+│           ├── risk.service.ts          # FINDRISC + Framingham equations
+│           ├── actionImpact.service.ts  # Action ranking engine
+│           ├── riskDriver.service.ts    # Risk factor attribution
+│           ├── foodImpact.service.ts    # Personalized food scoring
+│           ├── ai.service.ts            # Gemini coaching + plan generation
+│           └── progress.service.ts     # Longitudinal snapshot logging
+├── .env                           # VITE_FIREBASE_* + VITE_API_URL
+├── backend/.env                   # GEMINI_API_KEY
+└── package.json
 ```
 
 ---
@@ -107,80 +125,89 @@ healthguard-ai/
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18+ recommended)
-- A Gemini API Key from Google AI Studio.
+- **Node.js** v18+
+- A **Gemini API Key** from [Google AI Studio](https://aistudio.google.com/)
+- (Optional) Firebase project credentials for cloud sync
 
-### Installation
+### 1. Install Dependencies
 
-1. Clone the repository and navigate to the directory:
+```bash
+# Root (frontend)
+npm install
 
-   ```bash
-   cd healthguard-ai
-   ```
+# Backend
+cd backend && npm install
+```
 
-2. Install dependencies:
+### 2. Configure Environment Variables
 
-   ```bash
-   npm install
-   ```
+**Root `.env`** (frontend):
+```env
+VITE_FIREBASE_API_KEY="your-firebase-api-key"
+VITE_FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID="your-project-id"
+VITE_FIREBASE_STORAGE_BUCKET="your-project.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID="your-sender-id"
+VITE_FIREBASE_APP_ID="your-app-id"
+VITE_API_URL="http://localhost:5000"
+```
 
-3. Configure your Environment Variables:
-   Create a `.env` file in the root directory (or copy the existing template) and fill in your Gemini API key:
+**`backend/.env`**:
+```env
+GEMINI_API_KEY="your-gemini-api-key"
+# Optional: uncomment and set if you have a Firebase service account
+# FIREBASE_SA_KEY_PATH="./service-account.json"
+```
 
-   ```env
-   VITE_GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
-   ```
+> **Note**: Without Firebase service account credentials, the backend automatically falls back to in-memory mock storage. This is sufficient for local development and demos.
 
-4. Start the local development server:
+### 3. Start Development Servers
 
-   ```bash
-   npm run dev
-   ```
+**Both servers at once** (recommended):
+```bash
+npm run dev:all
+```
 
-5. Build the application for production:
-   ```bash
-   npm run build
-   ```
+**Or separately**:
+```bash
+# Terminal 1 — Frontend (http://localhost:5173)
+npm run dev
 
-### Running the Backend
+# Terminal 2 — Backend (http://localhost:5000)
+cd backend && npm run dev
+```
 
-The Express backend service resides in the `/backend` folder.
+### 4. First-Time User Flow
 
-1. Navigate to the backend directory and install backend dependencies:
+1. Visit `http://localhost:5173`
+2. **Sign up** or **Log in**
+3. Complete the one-time **Health Assessment** (redirected automatically)
+4. Land on your personalized **Dashboard** with risk profile, action impacts, and risk drivers
 
-   ```bash
-   cd backend
-   npm install
-   ```
+### 5. Production Build
 
-2. Start the backend development server:
-   ```bash
-   npm run dev
-   ```
+```bash
+# Frontend
+npm run build
 
-The backend server runs on `http://localhost:5000`. By default, it operates in a frictionless mock storage mode if no Firebase Credentials (`service-account.json`) are present, using an in-memory database and local unverified JWT decoding.
-
----
-
-## 🛠️ Execution Progress & Phases
-
-We are executing the productionization of HealthGuard AI in structured phases. Here is the current progress:
-
-| Phase        | Description                                                     | Status           |
-| ------------ | --------------------------------------------------------------- | ---------------- |
-| **Phase 1**  | Vite, React 19, TanStack routing, and Tailwind v4 core setup    | **Completed** ✅ |
-| **Phase 2**  | Multimodal Scanner (Vision OCR API) & Native Webcam Integration | **Completed** ✅ |
-| **Phase 3**  | Clinical Calibration (FINDRISC & Framingham equations)          | **Completed** ✅ |
-| **Phase 4**  | Safety Guardrails (AI claims and prescription validation)       | **Completed** ✅ |
-| **Phase 5**  | Code Quality & Linter Optimization                              | **Completed** ✅ |
-| **Phase 6**  | Backend Foundation & Firestore Migration                        | **Completed** ✅ |
-| **Phase 7**  | Clinical Risk Engine & Explainability System                    | **Completed** ✅ |
-| **Phase 8**  | What-If Simulator (Health Decision Engine)                      | **Completed** ✅ |
-| **Phase 9**  | AI Health Coach (Personalized Intelligence Layer)               | **Completed** ✅ |
-| **Phase 10** | Progress Intelligence & Longitudinal Health Tracking            | **Completed** ✅ |
+# Backend
+cd backend && npm run build
+```
 
 ---
 
-## 🗺️ Roadmap & Next Steps
+## 🗺️ Development Phases
 
-Next is the deployment, localization refinement, and testing of user engagement metrics.
+| Phase | Description | Status |
+|---|---|---|
+| **Phase 1** | Vite + React 19 + TanStack Router + Tailwind v4 foundation | ✅ Complete |
+| **Phase 2** | Multimodal Food Scanner (Gemini Vision OCR + webcam) | ✅ Complete |
+| **Phase 3** | Clinical Calibration (FINDRISC + Framingham equations) | ✅ Complete |
+| **Phase 4** | Safety Guardrails (AI claim + prescription validation) | ✅ Complete |
+| **Phase 5** | Backend Foundation + Firestore Migration | ✅ Complete |
+| **Phase 6** | Action Impact Engine (ranked lifestyle interventions) | ✅ Complete |
+| **Phase 7** | Risk Driver Analysis (explainable factor contributions) | ✅ Complete |
+| **Phase 8** | Food Intelligence (personalized food–risk connection) | ✅ Complete |
+| **Phase 9** | UX Cleanup (dashboard focus + sidebar simplification) | ✅ Complete |
+| **Phase 10** | Expert Review (human clinical review + real-time chat) | ✅ Complete |
+| **Phase 11** | Guided Onboarding (one-time assessment + smart redirects) | ✅ Complete |

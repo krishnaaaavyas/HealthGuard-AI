@@ -11,7 +11,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider, isConfigured } from "@/lib/firebase";
 
-const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 import { useProfile, useHealthResult, useHistory } from "@/lib/health-store";
 import { toast } from "sonner";
 
@@ -178,7 +178,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       try {
-        const idToken = await user.getIdToken();
+        const idToken = typeof user.getIdToken === "function"
+          ? await user.getIdToken()
+          : (auth.currentUser ? await auth.currentUser.getIdToken() : "mock-token");
 
         // We only write to backend if we have a profile to sync
         if (profile) {
