@@ -14,8 +14,16 @@ import {
 } from "@/components/ui/card";
 import { HeartPulse, Loader2, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage, tr } from "@/lib/i18n";
+
+import { z } from "zod";
+
+const signupSearchSchema = z.object({
+  redirect: z.string().optional(),
+});
 
 export const Route = createFileRoute("/signup")({
+  validateSearch: (search) => signupSearchSchema.parse(search),
   component: SignupPage,
 });
 
@@ -25,6 +33,7 @@ function SignupPage() {
   }, []);
 
   const { signUpWithEmail, user, loading, syncing, hasCompletedAssessment } = useAuth();
+  const { redirect } = Route.useSearch();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -33,15 +42,19 @@ function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
 
   // Redirect if user is already logged in
+  const currentLang = useLanguage();
   useEffect(() => {
     if (!loading && user && hasCompletedAssessment !== null) {
-      if (hasCompletedAssessment === true) {
+      if (redirect) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        navigate({ to: redirect as any });
+      } else if (hasCompletedAssessment === true) {
         navigate({ to: "/dashboard" });
       } else {
         navigate({ to: "/assessment" });
       }
     }
-  }, [user, loading, hasCompletedAssessment, navigate]);
+  }, [user, loading, hasCompletedAssessment, navigate, redirect]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,24 +102,20 @@ function SignupPage() {
             </div>
           </Link>
           <h2 className="mt-6 font-display text-2xl font-bold tracking-tight text-foreground">
-            Create your account
+            {tr("createAccount", currentLang)}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Start tracking and securing your clinical profile
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{tr("startTracking", currentLang)}</p>
         </div>
 
         <Card className="border-border bg-surface shadow-elevated">
           <CardHeader className="pb-4">
-            <CardTitle className="font-display text-lg">Sign up</CardTitle>
-            <CardDescription>
-              Enter details below to create your secure clinical account
-            </CardDescription>
+            <CardTitle className="font-display text-lg">{tr("signUp", currentLang)}</CardTitle>
+            <CardDescription>{tr("enterDetailsSignUp", currentLang)}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full name</Label>
+                <Label htmlFor="name">{tr("fullName", currentLang)}</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -122,7 +131,7 @@ function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email">{tr("emailAddress", currentLang)}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -138,7 +147,7 @@ function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password (min 6 characters)</Label>
+                <Label htmlFor="password">{tr("passwordLabel", currentLang)}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -154,7 +163,7 @@ function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">{tr("confirmPassword", currentLang)}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -177,20 +186,20 @@ function SignupPage() {
                 {submitting || syncing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    {tr("creatingAccount", currentLang)}
                   </>
                 ) : (
                   <>
-                    Sign up free <ArrowRight className="ml-2 h-4 w-4" />
+                    {tr("signUpFree", currentLang)} <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
               </Button>
             </form>
           </CardContent>
           <CardFooter className="justify-center border-t border-border pt-4 text-sm">
-            <span className="text-muted-foreground">Already have an account?</span>
+            <span className="text-muted-foreground">{tr("alreadyHaveAccount", currentLang)}</span>
             <Link to="/login" className="ml-1.5 font-semibold text-teal hover:underline">
-              Sign in
+              {tr("signIn", currentLang)}
             </Link>
           </CardFooter>
         </Card>

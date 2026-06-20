@@ -13,8 +13,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { HeartPulse, Loader2, Mail, Lock, ArrowRight } from "lucide-react";
+import { z } from "zod";
+import { useLanguage, tr } from "@/lib/i18n";
+
+const loginSearchSchema = z.object({
+  redirect: z.string().optional(),
+});
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search) => loginSearchSchema.parse(search),
   component: LoginPage,
 });
 
@@ -25,7 +32,9 @@ function LoginPage() {
 
   const { loginWithEmail, loginWithGoogle, user, loading, syncing, hasCompletedAssessment } =
     useAuth();
+  const { redirect } = Route.useSearch();
   const navigate = useNavigate();
+  const currentLang = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -33,13 +42,16 @@ function LoginPage() {
   // Redirect if user is already logged in
   useEffect(() => {
     if (!loading && user && hasCompletedAssessment !== null) {
-      if (hasCompletedAssessment === true) {
+      if (redirect) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        navigate({ to: redirect as any });
+      } else if (hasCompletedAssessment === true) {
         navigate({ to: "/dashboard" });
       } else {
         navigate({ to: "/assessment" });
       }
     }
-  }, [user, loading, hasCompletedAssessment, navigate]);
+  }, [user, loading, hasCompletedAssessment, navigate, redirect]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,22 +99,20 @@ function LoginPage() {
             </div>
           </Link>
           <h2 className="mt-6 font-display text-2xl font-bold tracking-tight text-foreground">
-            Welcome back
+            {tr("welcomeBack", currentLang)}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Access your personalized health portfolio
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{tr("accessPortfolio", currentLang)}</p>
         </div>
 
         <Card className="border-border bg-surface shadow-elevated">
           <CardHeader className="pb-4">
-            <CardTitle className="font-display text-lg">Sign in</CardTitle>
-            <CardDescription>Enter your credentials or use your Google account</CardDescription>
+            <CardTitle className="font-display text-lg">{tr("signIn", currentLang)}</CardTitle>
+            <CardDescription>{tr("enterCredentials", currentLang)}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleEmailLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email">{tr("emailAddress", currentLang)}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -119,12 +129,12 @@ function LoginPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{tr("passwordLabel", currentLang)}</Label>
                   <Link
                     to="/forgot-password"
                     className="text-xs font-semibold text-teal hover:underline"
                   >
-                    Forgot password?
+                    {tr("forgotPassword", currentLang)}
                   </Link>
                 </div>
                 <div className="relative">
@@ -149,11 +159,11 @@ function LoginPage() {
                 {submitting || syncing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    {tr("signingIn", currentLang)}
                   </>
                 ) : (
                   <>
-                    Sign in <ArrowRight className="ml-2 h-4 w-4" />
+                    {tr("signIn", currentLang)} <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
               </Button>
@@ -162,7 +172,7 @@ function LoginPage() {
             <div className="relative my-4 flex items-center justify-center">
               <span className="absolute w-full border-t border-border" />
               <span className="relative bg-surface px-3 text-xs uppercase text-muted-foreground">
-                or continue with
+                {tr("orContinueWith", currentLang)}
               </span>
             </div>
 
@@ -191,13 +201,13 @@ function LoginPage() {
                   d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.72-2.88c-1.1.74-2.5 1.18-4.24 1.18-3.21 0-5.99-2.49-6.86-5.43l-3.75 2.9C3.37 20.33 7.35 23 12 23z"
                 />
               </svg>
-              Sign in with Google
+              {tr("signInWithGoogle", currentLang)}
             </Button>
           </CardContent>
           <CardFooter className="justify-center border-t border-border pt-4 text-sm">
-            <span className="text-muted-foreground">Don't have an account?</span>
+            <span className="text-muted-foreground">{tr("dontHaveAccount", currentLang)}</span>
             <Link to="/signup" className="ml-1.5 font-semibold text-teal hover:underline">
-              Sign up free
+              {tr("signUpFree", currentLang)}
             </Link>
           </CardFooter>
         </Card>

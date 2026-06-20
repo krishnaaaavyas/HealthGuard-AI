@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useLanguage, tr } from "@/lib/i18n";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,9 +20,10 @@ export const Route = createFileRoute("/forgot-password")({
 });
 
 function ForgotPasswordPage() {
+  const currentLang = useLanguage();
   useEffect(() => {
-    document.title = "Forgot Password — HealthGuard";
-  }, []);
+    document.title = `${tr("forgotPasswordTitle", currentLang)} — HealthGuard`;
+  }, [currentLang]);
 
   const { resetPassword } = useAuth();
   const [email, setEmail] = useState("");
@@ -64,32 +66,29 @@ function ForgotPasswordPage() {
             </div>
           </Link>
           <h2 className="mt-6 font-display text-2xl font-bold tracking-tight text-foreground">
-            Reset password
+            {tr("resetPasswordTitle", currentLang)}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            We'll help you regain access securely
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{tr("regainAccess", currentLang)}</p>
         </div>
 
         <Card className="border-border bg-surface shadow-elevated">
           <CardHeader className="pb-4">
-            <CardTitle className="font-display text-lg">Forgot password</CardTitle>
+            <CardTitle className="font-display text-lg">
+              {tr("forgotPasswordTitle", currentLang)}
+            </CardTitle>
             <CardDescription>
-              {sent
-                ? "Password recovery link has been sent to your email."
-                : "Enter your email address to receive a recovery link."}
+              {sent ? tr("sentRecoveryDesc", currentLang) : tr("enterRecoveryDesc", currentLang)}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {sent ? (
               <div className="rounded-lg border border-teal/20 bg-accent/30 p-4 text-center text-sm text-accent-foreground">
-                Please check your inbox (including spam folder) for instructions to reset your
-                password.
+                {tr("inboxInstructions", currentLang)}
               </div>
             ) : (
               <form onSubmit={handleReset} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email address</Label>
+                  <Label htmlFor="email">{tr("emailAddress", currentLang)}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -112,11 +111,11 @@ function ForgotPasswordPage() {
                   {submitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
+                      {tr("sending", currentLang)}
                     </>
                   ) : (
                     <>
-                      Send recovery link <Send className="ml-2 h-3.5 w-3.5" />
+                      {tr("sendRecoveryLink", currentLang)} <Send className="ml-2 h-3.5 w-3.5" />
                     </>
                   )}
                 </Button>
@@ -128,7 +127,7 @@ function ForgotPasswordPage() {
               to="/login"
               className="inline-flex items-center gap-1.5 font-semibold text-teal hover:underline"
             >
-              <ArrowLeft className="h-4 w-4" /> Back to sign in
+              <ArrowLeft className="h-4 w-4" /> {tr("backToSignIn", currentLang)}
             </Link>
           </CardFooter>
         </Card>

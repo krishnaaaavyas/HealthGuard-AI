@@ -94,9 +94,15 @@ function Landing() {
                 size="lg"
                 className="h-12 gap-2 bg-primary text-primary-foreground hover:bg-primary/95 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 px-6 font-semibold"
               >
-                <Link to="/assessment">
-                  {tr("startAssessment", currentLang)} <ArrowRight className="h-4 w-4" />
-                </Link>
+                {user ? (
+                  <Link to="/assessment">
+                    {tr("startAssessment", currentLang)} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <Link to="/login" search={{ redirect: "/assessment" }}>
+                    {tr("startAssessment", currentLang)} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                )}
               </Button>
               <Button
                 asChild
@@ -135,7 +141,7 @@ function Landing() {
                       {tr("diabetes", currentLang)}
                     </h3>
                     <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                      Glucose baselines, family history, and physical activity indicators.
+                      {tr("diabetesDesc", currentLang)}
                     </p>
                   </div>
                 </div>
@@ -153,7 +159,7 @@ function Landing() {
                       {tr("hypertension", currentLang)}
                     </h3>
                     <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                      Blood pressure markers, dietary habits, and weight indicators.
+                      {tr("hypertensionDesc", currentLang)}
                     </p>
                   </div>
                 </div>
@@ -171,7 +177,7 @@ function Landing() {
                       {tr("heartDisease", currentLang)}
                     </h3>
                     <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                      Cardiovascular risk baseline and personalized preventive guidance.
+                      {tr("heartDiseaseDesc", currentLang)}
                     </p>
                   </div>
                 </div>
@@ -399,9 +405,15 @@ function Landing() {
                 size="lg"
                 className="h-11 gap-2 bg-primary text-primary-foreground hover:bg-primary/95 px-6 font-semibold"
               >
-                <Link to="/assessment">
-                  {tr("startHealthAssessment", currentLang)} <ArrowRight className="h-4 w-4" />
-                </Link>
+                {user ? (
+                  <Link to="/assessment">
+                    {tr("startHealthAssessment", currentLang)} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <Link to="/login" search={{ redirect: "/assessment" }}>
+                    {tr("startHealthAssessment", currentLang)} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                )}
               </Button>
               <Button
                 asChild

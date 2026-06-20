@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2, Sparkles, TrendingDown, Activity } from "lucide-react";
 import { auth } from "@/lib/firebase";
+import { useLanguage, tr } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/simulator")({
   component: ActionImpactExplorerPage,
@@ -24,6 +25,7 @@ function colorFor(score: number) {
 }
 
 function ActionImpactExplorerPage() {
+  const currentLang = useLanguage();
   const navigate = useNavigate();
   const [profile] = useProfile();
   const [result] = useHealthResult();
@@ -43,8 +45,8 @@ function ActionImpactExplorerPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    document.title = "Action Impact Explorer — HealthGuard";
-  }, []);
+    document.title = tr("actionImpactExplorer", currentLang) + " — " + tr("appName", currentLang);
+  }, [currentLang]);
 
   useEffect(() => {
     if (!result || !profile) return;
@@ -82,16 +84,16 @@ function ActionImpactExplorerPage() {
           <Activity className="h-7 w-7" />
         </div>
         <h1 className="mt-6 font-display text-3xl font-bold tracking-tight text-foreground">
-          Assessment Required
+          {tr("assessmentRequired", currentLang)}
         </h1>
         <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-md">
-          Please complete your initial health assessment before opening the Action Impact Explorer.
+          {tr("fit_please_complete", currentLang)}
         </p>
         <Button
           onClick={() => navigate({ to: "/assessment" })}
           className="mt-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold px-6 py-2 h-11"
         >
-          <span>Start Assessment</span>
+          <span>{tr("startAssessment", currentLang)}</span>
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
@@ -115,14 +117,13 @@ function ActionImpactExplorerPage() {
           variant="secondary"
           className="rounded-full bg-teal/10 text-teal border border-teal/20"
         >
-          Simulation Engine
+          {tr("simulationEngine", currentLang)}
         </Badge>
         <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-          Action Impact Explorer
+          {tr("actionImpactExplorer", currentLang)}
         </h1>
         <p className="mt-2 text-muted-foreground text-sm leading-relaxed">
-          See how much you can reduce your clinical risk profile by committing to key lifestyle
-          habits.
+          {tr("fit_explore_action_impact", currentLang)}
         </p>
       </div>
 
@@ -132,7 +133,7 @@ function ActionImpactExplorerPage() {
         <Card className="border-border bg-surface shadow-card-soft h-full flex flex-col justify-between">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-mono">
-              Current Overall Risk
+              {tr("currentOverallRisk", currentLang)}
             </CardTitle>
           </CardHeader>
           <CardContent className="py-6 flex-1 flex flex-col justify-center">
@@ -153,7 +154,15 @@ function ActionImpactExplorerPage() {
                   backgroundColor: `${overallColor}08`,
                 }}
               >
-                {result.overallRisk} Risk
+                {tr(
+                  result.overallRisk.toLowerCase() === "low"
+                    ? "low"
+                    : result.overallRisk.toLowerCase() === "moderate"
+                      ? "moderateRisk"
+                      : "high",
+                  currentLang,
+                )}{" "}
+                {tr("fit_risk", currentLang)}
               </span>
             </div>
           </CardContent>
@@ -164,7 +173,8 @@ function ActionImpactExplorerPage() {
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal via-primary to-accent" />
           <CardHeader className="pb-2">
             <CardTitle className="font-display text-sm font-bold text-foreground flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-teal animate-pulse" /> Top Lifestyle Improvements
+              <Sparkles className="h-4 w-4 text-teal animate-pulse" />{" "}
+              {tr("topLifestyleImprovements", currentLang)}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-2 flex-1">
@@ -172,7 +182,7 @@ function ActionImpactExplorerPage() {
               <div className="flex flex-col gap-3 justify-center items-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-teal" />
                 <span className="text-xs text-muted-foreground">
-                  Calculating health benefits...
+                  {tr("calculatingBenefits", currentLang)}
                 </span>
               </div>
             ) : actionImpacts.length > 0 ? (
@@ -210,7 +220,7 @@ function ActionImpactExplorerPage() {
                       <div
                         className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-black ${badgeColors[idx % 3]}`}
                       >
-                        -{action.absoluteReduction} pts
+                        -{action.absoluteReduction} {tr("fit_pts", currentLang)}
                       </div>
                     </div>
                   );
@@ -219,7 +229,7 @@ function ActionImpactExplorerPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center text-xs text-muted-foreground">
                 <TrendingDown className="h-8 w-8 text-teal/40 mb-2" />
-                <span>Your profile is fully optimized! Keep up the healthy habits.</span>
+                <span>{tr("fit_profile_fully_optimized", currentLang)}</span>
               </div>
             )}
           </CardContent>
@@ -229,7 +239,7 @@ function ActionImpactExplorerPage() {
       <div className="flex justify-end pt-4">
         <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/95">
           <Link to="/action-plan">
-            View Action Plan <ArrowRight className="ml-2 h-4 w-4" />
+            {tr("fit_view_action_plan", currentLang)} <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
       </div>

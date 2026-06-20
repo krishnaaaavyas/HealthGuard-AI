@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Download, HeartPulse } from "lucide-react";
 import jsPDF from "jspdf";
 import { EmptyState, LedgerTable, RiskLedgerTable } from "./_app.dashboard";
+import { useLanguage, tr, translations } from "@/lib/i18n";
 
 const CHART_GREEN = "oklch(0.62 0.13 155)";
 const CHART_AMBER = "oklch(0.74 0.15 70)";
@@ -28,9 +29,12 @@ export const Route = createFileRoute("/_app/report")({
 });
 
 function ReportPage() {
+  const currentLang = useLanguage();
+
   useEffect(() => {
-    document.title = "Health Report — HealthGuard";
-  }, []);
+    document.title = tr("fit_health_report_title", currentLang);
+  }, [currentLang]);
+
   const [resultMaybe] = useHealthResult();
   const [profileMaybe] = useProfile();
   const [history] = useHistory();
@@ -59,12 +63,15 @@ function ReportPage() {
     doc.setTextColor(255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
-    doc.text("HealthGuard Clinical Report", margin, 40);
+    doc.text(tr("clinicalReportTitle", currentLang), margin, 40);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text("AI-assisted preventive health assessment", margin, 58);
+    doc.text(tr("aiAssistedAssessment", currentLang), margin, 58);
     doc.setFontSize(9);
-    doc.text(new Date().toLocaleString(), pageW - margin, 58, { align: "right" });
+    const formattedDate = new Date().toLocaleString(
+      currentLang === "en" ? "en-US" : currentLang === "hi" ? "hi-IN" : "gu-IN",
+    );
+    doc.text(formattedDate, pageW - margin, 58, { align: "right" });
     y = 120;
     doc.setTextColor(20);
 
@@ -75,7 +82,7 @@ function ReportPage() {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
         doc.setTextColor(140);
-        doc.text("HealthGuard Clinical Report (cont.)", margin, margin - 15);
+        doc.text(tr("clinicalReportTitleCont", currentLang), margin, margin - 15);
         doc.setDrawColor(230);
         doc.line(margin, margin - 10, pageW - margin, margin - 10);
       }
@@ -107,18 +114,36 @@ function ReportPage() {
     };
 
     // Profile
-    title("Patient profile");
+    title(tr("patientProfile", currentLang));
+    const ageLabel = tr("age", currentLang);
+    const yrsLabel = tr("yrs", currentLang);
+    const genderLabel = tr("gender", currentLang);
+    const genderVal = tr(profile.gender.toLowerCase() as keyof typeof translations, currentLang);
+    const heightLabel = tr("heightLabel", currentLang);
+    const weightLabel = tr("weightLabel", currentLang);
+    const smokingLabel = tr("smoking", currentLang);
+    const smokingVal = tr(profile.smoking.toLowerCase() as keyof typeof translations, currentLang);
+    const exerciseLabel = tr("exercise", currentLang);
+    const exerciseVal = tr(
+      profile.exercise.toLowerCase() as keyof typeof translations,
+      currentLang,
+    );
+    const familyHistoryLabel = tr("familyHistoryLabel", currentLang);
+    const familyHistoryVal = profile.familyHistory || tr("noneReported", currentLang);
+    const symptomsLabel = tr("symptomsLabel", currentLang);
+    const symptomsVal = profile.symptoms || tr("noneReported", currentLang);
+
     [
-      `Age: ${profile.age}    Gender: ${profile.gender}`,
-      `Height: ${profile.heightCm} cm    Weight: ${profile.weightKg} kg    BMI: ${result.bmi}`,
-      `Smoking: ${profile.smoking}    Exercise: ${profile.exercise}`,
-      `Family history: ${profile.familyHistory || "none reported"}`,
-      `Reported symptoms: ${profile.symptoms || "none reported"}`,
+      `${ageLabel}: ${profile.age} ${yrsLabel}    ${genderLabel}: ${genderVal}`,
+      `${heightLabel}: ${profile.heightCm} cm    ${weightLabel}: ${profile.weightKg} kg    BMI: ${result.bmi}`,
+      `${smokingLabel}: ${smokingVal}    ${exerciseLabel}: ${exerciseVal}`,
+      `${familyHistoryLabel}: ${familyHistoryVal}`,
+      `${symptomsLabel}: ${symptomsVal}`,
     ].forEach((l) => para(l));
     y += 10;
 
     // Overall risk
-    title("Overall risk score");
+    title(tr("overallRisk", currentLang));
     ensureSpace(60);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(28);
@@ -132,12 +157,26 @@ function ReportPage() {
     doc.text(`${result.overallScore}/80`, margin, y);
     y += 26;
     doc.setFontSize(11);
-    doc.text(`${result.overallRisk} risk`, margin, y);
+    const riskLvlText = tr(
+      result.overallRisk.toLowerCase() === "low"
+        ? "low"
+        : result.overallRisk.toLowerCase() === "moderate"
+          ? "moderateRisk"
+          : "high",
+      currentLang,
+    );
+    doc.text(`${riskLvlText} ${tr("riskWord", currentLang)}`, margin, y);
     y += 22;
     doc.setTextColor(40);
 
     // Per-condition
-    title("Per-condition risk");
+    title(tr("perConditionRisk", currentLang));
+    const conditionKeyMap: Record<string, string> = {
+      "Diabetes (Type 2)": "fit_diabetes_label",
+      "Heart Disease": "fit_heart_disease_label",
+      Hypertension: "fit_hypertension_label",
+    };
+
     (
       [
         ["Diabetes (Type 2)", result.risk.diabetes, result.rationale.diabetes],
@@ -148,7 +187,8 @@ function ReportPage() {
       ensureSpace(40);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text(`${name}: ${score}/100`, margin, y);
+      const condName = tr(conditionKeyMap[name] || name, currentLang);
+      doc.text(`${condName}: ${score}/100`, margin, y);
       y += 14;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
@@ -158,9 +198,9 @@ function ReportPage() {
 
     // Plans
     const sections: Array<[string, string]> = [
-      ["Diet plan", result.dietPlan],
-      ["Exercise plan", result.exercisePlan],
-      ["Prevention recommendations", result.preventionTips],
+      [tr("dietPlan", currentLang), result.dietPlan],
+      [tr("exercisePlan", currentLang), result.exercisePlan],
+      [tr("prevention", currentLang), result.preventionTips],
     ];
     sections.forEach(([t, body]) => {
       y += 6;
@@ -175,15 +215,15 @@ function ReportPage() {
       const weightDiff = latest.weightKg - baseline.weightKg;
       const scoreDiff = latest.overallScore - baseline.overallScore;
 
-      title("Longitudinal Progress & Trends");
+      title(tr("longitudinalProgress", currentLang));
       ensureSpace(120);
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.text("Metric", margin, y);
-      doc.text("Baseline", margin + 140, y);
-      doc.text("Current", margin + 240, y);
-      doc.text("Absolute Change", margin + 340, y);
+      doc.text(tr("fit_metric", currentLang), margin, y);
+      doc.text(tr("fit_baseline", currentLang), margin + 140, y);
+      doc.text(tr("fit_current", currentLang), margin + 240, y);
+      doc.text(tr("fit_absolute_change", currentLang), margin + 340, y);
       y += 8;
       doc.setDrawColor(220);
       doc.line(margin, y, pageW - margin, y);
@@ -193,14 +233,14 @@ function ReportPage() {
       doc.setFontSize(10);
 
       // Body Weight
-      doc.text("Body Weight", margin, y);
+      doc.text(tr("fit_body_weight", currentLang), margin, y);
       doc.text(`${baseline.weightKg.toFixed(1)} kg`, margin + 140, y);
       doc.text(`${latest.weightKg.toFixed(1)} kg`, margin + 240, y);
       doc.text(`${weightDiff >= 0 ? "+" : ""}${weightDiff.toFixed(1)} kg`, margin + 340, y);
       y += 16;
 
       // BMI
-      doc.text("Body Mass Index (BMI)", margin, y);
+      doc.text(tr("fit_body_mass_index", currentLang), margin, y);
       doc.text(`${baseline.bmi.toFixed(1)}`, margin + 140, y);
       doc.text(`${latest.bmi.toFixed(1)}`, margin + 240, y);
       const bmiDiff = latest.bmi - baseline.bmi;
@@ -208,29 +248,31 @@ function ReportPage() {
       y += 16;
 
       // Overall Risk Score
-      doc.text("Overall Risk Score", margin, y);
+      doc.text(tr("fit_overall_risk_score", currentLang), margin, y);
       doc.text(`${baseline.overallScore}/80`, margin + 140, y);
       doc.text(`${latest.overallScore}/80`, margin + 240, y);
-      doc.text(`${scoreDiff >= 0 ? "+" : ""}${scoreDiff} pts`, margin + 340, y);
+      doc.text(
+        `${scoreDiff >= 0 ? "+" : ""}${scoreDiff} ${tr("fit_pts", currentLang)}`,
+        margin + 340,
+        y,
+      );
       y += 24;
 
       // Milestones achieved list
       const milestonesList: string[] = [];
       if (baseline.weightKg - latest.weightKg >= 5) {
-        milestonesList.push(
-          `🎉 Weight Loss Milestone: Lost ${(baseline.weightKg - latest.weightKg).toFixed(1)}kg since first assessment.`,
-        );
+        const valStr = (baseline.weightKg - latest.weightKg).toFixed(1);
+        milestonesList.push(tr("fit_milestone_weight", currentLang).replace("{val}", valStr));
       }
       if (baseline.overallScore - latest.overallScore >= 10) {
-        milestonesList.push(
-          `🎉 Risk Reduction Milestone: Overall risk score reduced by ${baseline.overallScore - latest.overallScore} points.`,
-        );
+        const valStr = (baseline.overallScore - latest.overallScore).toString();
+        milestonesList.push(tr("fit_milestone_risk", currentLang).replace("{val}", valStr));
       }
       if (milestonesList.length > 0) {
         ensureSpace(60);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
-        doc.text("HEALTH MILESTONES ACHIEVED", margin, y);
+        doc.text(tr("fit_milestone_title", currentLang), margin, y);
         y += 14;
         doc.setFont("helvetica", "normal");
         milestonesList.forEach((m) => {
@@ -244,14 +286,24 @@ function ReportPage() {
     y += 12;
     doc.setFontSize(8);
     doc.setTextColor(120);
-    const disc = doc.splitTextToSize(
-      "Disclaimer: This report contains AI-generated estimates produced for educational and preventive purposes. It is not a clinical diagnosis and does not replace consultation with a qualified medical professional.",
-      cw,
-    );
+    const disc = doc.splitTextToSize(tr("fit_report_disclaimer", currentLang), cw);
     doc.text(disc, margin, y);
 
     doc.save(`healthguard-report-${new Date().toISOString().slice(0, 10)}.pdf`);
   }
+
+  const overallRiskKey =
+    result.overallRisk.toLowerCase() === "low"
+      ? "low"
+      : result.overallRisk.toLowerCase() === "moderate"
+        ? "moderateRisk"
+        : "high";
+
+  const levelKeyMap: Record<string, string> = {
+    Low: "low",
+    Moderate: "moderateRisk",
+    High: "high",
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -261,20 +313,18 @@ function ReportPage() {
             variant="secondary"
             className="rounded-full bg-teal/10 text-teal border border-teal/20 hover:bg-teal/20"
           >
-            Clinical report
+            {tr("clinicalReport", currentLang)}
           </Badge>
           <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            Your health report
+            {tr("yourHealthReport", currentLang)}
           </h1>
-          <p className="mt-2 text-muted-foreground">
-            Share this with your physician at your next visit.
-          </p>
+          <p className="mt-2 text-muted-foreground">{tr("shareWithPhysician", currentLang)}</p>
         </div>
         <Button
           onClick={download}
           className="gap-2 bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow transition-all font-semibold"
         >
-          <Download className="h-4 w-4" /> Download PDF
+          <Download className="h-4 w-4" /> {tr("downloadPdfBtn", currentLang)}
         </Button>
       </div>
 
@@ -286,89 +336,116 @@ function ReportPage() {
               <HeartPulse className="h-5 w-5" />
             </div>
             <div>
-              <div className="font-display text-lg font-bold">HealthGuard Clinical Report</div>
+              <div className="font-display text-lg font-bold">
+                {tr("clinicalReportTitle", currentLang)}
+              </div>
               <div className="text-xs text-primary-foreground/70">
-                AI-assisted preventive health assessment
+                {tr("aiAssistedAssessment", currentLang)}
               </div>
             </div>
           </div>
           <div className="text-right text-xs text-primary-foreground/70">
-            {new Date().toLocaleString()}
+            {new Date().toLocaleString(
+              currentLang === "en" ? "en-US" : currentLang === "hi" ? "hi-IN" : "gu-IN",
+            )}
           </div>
         </div>
 
         <CardContent className="space-y-8 p-8">
-          <Section title="Patient profile">
+          <Section title={tr("patientProfile", currentLang)}>
             <LedgerTable
               items={[
                 {
-                  parameter: "Age",
-                  value: `${profile.age} yrs`,
-                  reference: "Adult baseline",
-                  status: "Demographic",
+                  parameter: tr("age", currentLang),
+                  value: `${profile.age} ${tr("yrs", currentLang)}`,
+                  reference: tr("adultBaseline", currentLang),
+                  status: tr("demographicStatus", currentLang),
                 },
                 {
-                  parameter: "Gender",
-                  value: profile.gender,
-                  reference: "Metabolic standard",
-                  status: "Recorded",
+                  parameter: tr("gender", currentLang),
+                  value: tr(profile.gender.toLowerCase() as keyof typeof translations, currentLang),
+                  reference: tr("metabolicStandard", currentLang),
+                  status: tr("recordedStatus", currentLang),
                 },
                 {
-                  parameter: "Height",
+                  parameter: tr("heightLabel", currentLang),
                   value: `${profile.heightCm} cm`,
-                  reference: "Demographic standard",
-                  status: "Recorded",
+                  reference: tr("demographicStandard", currentLang),
+                  status: tr("recordedStatus", currentLang),
                 },
                 {
-                  parameter: "Weight",
+                  parameter: tr("weightLabel", currentLang),
                   value: `${profile.weightKg} kg`,
-                  reference: "Subject baseline",
-                  status: "Recorded",
+                  reference: tr("subjectBaseline", currentLang),
+                  status: tr("recordedStatus", currentLang),
                 },
                 {
-                  parameter: "Body Mass Index (BMI)",
+                  parameter: tr("fit_body_mass_index", currentLang),
                   value: `${result.bmi}`,
-                  reference: "18.5 – 24.9 optimal",
-                  status: result.bmi >= 18.5 && result.bmi < 25 ? "Optimal" : "Review",
+                  reference: tr("optimalBmiRange", currentLang),
+                  status:
+                    result.bmi >= 18.5 && result.bmi < 25
+                      ? tr("optimalStatus", currentLang)
+                      : tr("reviewStatus", currentLang),
                   statusColor:
                     result.bmi >= 18.5 && result.bmi < 25
                       ? "bg-success/10 text-success"
                       : "bg-warning/10 text-warning",
                 },
                 {
-                  parameter: "Smoking history",
-                  value: profile.smoking,
-                  reference: "Non-smoker standard",
-                  status: profile.smoking === "never" ? "Optimal" : "Review",
+                  parameter: tr("smokingHistory", currentLang),
+                  value: tr(
+                    profile.smoking.toLowerCase() as keyof typeof translations,
+                    currentLang,
+                  ),
+                  reference: tr("nonSmokerStandard", currentLang),
+                  status:
+                    profile.smoking === "never"
+                      ? tr("optimalStatus", currentLang)
+                      : tr("reviewStatus", currentLang),
                   statusColor:
                     profile.smoking === "never"
                       ? "bg-success/10 text-success"
                       : "bg-warning/10 text-warning",
                 },
                 {
-                  parameter: "Exercise baseline",
-                  value: profile.exercise,
-                  reference: "3-4x/week active target",
-                  status: profile.exercise === "none" ? "Sedentary" : "Active",
+                  parameter: tr("exerciseBaseline", currentLang),
+                  value: tr(
+                    profile.exercise.toLowerCase() as keyof typeof translations,
+                    currentLang,
+                  ),
+                  reference: tr("activeTarget", currentLang),
+                  status:
+                    profile.exercise === "none"
+                      ? tr("sedentaryStatus", currentLang)
+                      : tr("activeStatus", currentLang),
                   statusColor:
                     profile.exercise === "none"
                       ? "bg-warning/10 text-warning"
                       : "bg-success/10 text-success",
                 },
                 {
-                  parameter: "Hereditary risk markers",
-                  value: profile.familyHistory ? "Reported" : "None",
-                  reference: "Family history profile",
-                  status: profile.familyHistory ? "Review" : "Optimal",
+                  parameter: tr("hereditaryRiskMarkers", currentLang),
+                  value: profile.familyHistory
+                    ? tr("reportedStatus", currentLang)
+                    : tr("noneStatus", currentLang),
+                  reference: tr("familyHistoryProfile", currentLang),
+                  status: profile.familyHistory
+                    ? tr("reviewStatus", currentLang)
+                    : tr("optimalStatus", currentLang),
                   statusColor: profile.familyHistory
                     ? "bg-warning/10 text-warning"
                     : "bg-success/10 text-success",
                 },
                 {
-                  parameter: "Active symptom tracking",
-                  value: profile.symptoms ? "Reported" : "None",
-                  reference: "Self-reported concerns",
-                  status: profile.symptoms ? "Review" : "Optimal",
+                  parameter: tr("activeSymptomTracking", currentLang),
+                  value: profile.symptoms
+                    ? tr("reportedStatus", currentLang)
+                    : tr("noneStatus", currentLang),
+                  reference: tr("selfReportedConcerns", currentLang),
+                  status: profile.symptoms
+                    ? tr("reviewStatus", currentLang)
+                    : tr("optimalStatus", currentLang),
                   statusColor: profile.symptoms
                     ? "bg-warning/10 text-warning"
                     : "bg-success/10 text-success",
@@ -377,7 +454,7 @@ function ReportPage() {
             />
           </Section>
 
-          <Section title="Overall risk score">
+          <Section title={tr("overallRiskScore", currentLang)}>
             <div className="flex items-baseline gap-3">
               <span className="font-display text-5xl font-bold text-primary">
                 {result.overallScore}
@@ -387,101 +464,121 @@ function ReportPage() {
                 className="text-sm font-semibold text-muted-foreground"
                 style={{ color: overallColor }}
               >
-                {result.overallRisk} risk
+                {tr(overallRiskKey, currentLang)} {tr("riskWord", currentLang)}
               </span>
             </div>
           </Section>
 
           {history && history.length >= 2 && (
-            <Section title="Longitudinal Progress & Trends">
+            <Section title={tr("longitudinalProgress", currentLang)}>
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                 <div className="rounded-lg border border-border bg-surface-muted/60 p-4">
                   <span className="text-xs text-muted-foreground font-semibold uppercase font-display">
-                    Weight Evolution
+                    {tr("fit_weight_evolution", currentLang)}
                   </span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-xl font-bold text-foreground">
                       {history[history.length - 1].weightKg} kg
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      vs {history[0].weightKg} kg baseline
+                      {tr("fit_vs_baseline_text", currentLang).replace(
+                        "{val}",
+                        history[0].weightKg.toString(),
+                      )}
                     </span>
                   </div>
                   <span
                     className={`text-xs font-bold mt-1.5 block ${history[history.length - 1].weightKg - history[0].weightKg <= 0 ? "text-success" : "text-danger"}`}
                   >
                     {history[history.length - 1].weightKg - history[0].weightKg <= 0
-                      ? `▼ ${(history[0].weightKg - history[history.length - 1].weightKg).toFixed(1)} kg lost`
-                      : `▲ ${(history[history.length - 1].weightKg - history[0].weightKg).toFixed(1)} kg gained`}
+                      ? `▼ ${(history[0].weightKg - history[history.length - 1].weightKg).toFixed(1)} kg ${tr("fit_lost", currentLang)}`
+                      : `▲ ${(history[history.length - 1].weightKg - history[0].weightKg).toFixed(1)} kg ${tr("fit_gained", currentLang)}`}
                   </span>
                 </div>
 
                 <div className="rounded-lg border border-border bg-surface-muted/60 p-4">
                   <span className="text-xs text-muted-foreground font-semibold uppercase font-display">
-                    Risk Score Change
+                    {tr("fit_risk_score_change", currentLang)}
                   </span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-xl font-bold text-foreground">
-                      {history[history.length - 1].overallScore} pts
+                      {history[history.length - 1].overallScore} {tr("fit_pts", currentLang)}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      vs {history[0].overallScore} pts baseline
+                      {tr("fit_vs_baseline_text", currentLang).replace(
+                        "{val}",
+                        `${history[0].overallScore} ${tr("fit_pts", currentLang)}`,
+                      )}
                     </span>
                   </div>
                   <span
                     className={`text-xs font-bold mt-1.5 block ${history[history.length - 1].overallScore - history[0].overallScore <= 0 ? "text-success" : "text-warning"}`}
                   >
                     {history[history.length - 1].overallScore - history[0].overallScore <= 0
-                      ? `▼ ${history[0].overallScore - history[history.length - 1].overallScore} pts improved`
-                      : `▲ ${history[history.length - 1].overallScore - history[0].overallScore} pts increased`}
+                      ? `▼ ${history[0].overallScore - history[history.length - 1].overallScore} ${tr("fit_pts", currentLang)} ${tr("fit_improved", currentLang)}`
+                      : `▲ ${history[history.length - 1].overallScore - history[0].overallScore} ${tr("fit_pts", currentLang)} ${tr("fit_increased", currentLang)}`}
                   </span>
                 </div>
 
                 <div className="rounded-lg border border-border bg-surface-muted/60 p-4 sm:col-span-2 md:col-span-1">
                   <span className="text-xs text-muted-foreground font-semibold uppercase font-display">
-                    BMI Evolution
+                    {tr("fit_bmi_evolution", currentLang)}
                   </span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-xl font-bold text-foreground">
                       {history[history.length - 1].bmi.toFixed(1)}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      vs {history[0].bmi.toFixed(1)} baseline
+                      {tr("fit_vs_baseline_text", currentLang).replace(
+                        "{val}",
+                        history[0].bmi.toFixed(1),
+                      )}
                     </span>
                   </div>
                   <span
                     className={`text-xs font-bold mt-1.5 block ${history[history.length - 1].bmi - history[0].bmi <= 0 ? "text-success" : "text-warning"}`}
                   >
                     {history[history.length - 1].bmi - history[0].bmi <= 0
-                      ? `▼ ${(history[0].bmi - history[history.length - 1].bmi).toFixed(1)} points improved`
-                      : `▲ ${(history[history.length - 1].bmi - history[0].bmi).toFixed(1)} points increased`}
+                      ? `▼ ${(history[0].bmi - history[history.length - 1].bmi).toFixed(1)} ${tr("points", currentLang)} ${tr("fit_improved", currentLang)}`
+                      : `▲ ${(history[history.length - 1].bmi - history[0].bmi).toFixed(1)} ${tr("points", currentLang)} ${tr("fit_increased", currentLang)}`}
                   </span>
                 </div>
               </div>
             </Section>
           )}
 
-          <Section title="Per-condition risk breakdown">
+          <Section title={tr("perConditionRisk", currentLang)}>
             <RiskLedgerTable
               items={[
                 {
-                  condition: "Diabetes (Type 2)",
+                  condition: tr("fit_diabetes_label", currentLang),
                   score: result.risk.diabetes,
-                  classification: levelFor(result.risk.diabetes),
+                  classification: tr(
+                    levelKeyMap[levelFor(result.risk.diabetes)] || levelFor(result.risk.diabetes),
+                    currentLang,
+                  ),
                   color: colorFor(result.risk.diabetes),
                   rationale: result.rationale.diabetes,
                 },
                 {
-                  condition: "Heart Disease",
+                  condition: tr("fit_heart_disease_label", currentLang),
                   score: result.risk.heartDisease,
-                  classification: levelFor(result.risk.heartDisease),
+                  classification: tr(
+                    levelKeyMap[levelFor(result.risk.heartDisease)] ||
+                      levelFor(result.risk.heartDisease),
+                    currentLang,
+                  ),
                   color: colorFor(result.risk.heartDisease),
                   rationale: result.rationale.heartDisease,
                 },
                 {
-                  condition: "Hypertension",
+                  condition: tr("fit_hypertension_label", currentLang),
                   score: result.risk.hypertension,
-                  classification: levelFor(result.risk.hypertension),
+                  classification: tr(
+                    levelKeyMap[levelFor(result.risk.hypertension)] ||
+                      levelFor(result.risk.hypertension),
+                    currentLang,
+                  ),
                   color: colorFor(result.risk.hypertension),
                   rationale: result.rationale.hypertension,
                 },
@@ -489,16 +586,14 @@ function ReportPage() {
             />
           </Section>
 
-          <Section title="Recommendations">
-            <Sub heading="Diet">{result.dietPlan}</Sub>
-            <Sub heading="Exercise">{result.exercisePlan}</Sub>
-            <Sub heading="Prevention">{result.preventionTips}</Sub>
+          <Section title={tr("recommendations", currentLang)}>
+            <Sub heading={tr("diet", currentLang)}>{result.dietPlan}</Sub>
+            <Sub heading={tr("exercise", currentLang)}>{result.exercisePlan}</Sub>
+            <Sub heading={tr("prevention", currentLang)}>{result.preventionTips}</Sub>
           </Section>
 
           <p className="border-t border-border pt-4 text-xs text-muted-foreground">
-            Disclaimer: This report contains AI-generated estimates produced for educational and
-            preventive purposes. It is not a clinical diagnosis and does not replace consultation
-            with a qualified medical professional.
+            {tr("fit_report_disclaimer", currentLang)}
           </p>
         </CardContent>
       </Card>

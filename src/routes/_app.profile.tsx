@@ -28,8 +28,8 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 function ProfilePage() {
   const currentLang = useLanguage();
   useEffect(() => {
-    document.title = "User Profile — HealthGuard";
-  }, []);
+    document.title = `${tr("profile", currentLang)} — HealthGuard`;
+  }, [currentLang]);
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -117,7 +117,7 @@ function ProfilePage() {
           className="h-8 text-xs border-border hover:bg-accent/40"
         >
           <Link to="/dashboard">
-            <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back to Dashboard
+            <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> {tr("backToDashboard", currentLang)}
           </Link>
         </Button>
       </div>
@@ -132,7 +132,7 @@ function ProfilePage() {
                 user.photoURL ||
                 undefined
               }
-              alt={user.displayName || "Patient"}
+              alt={user.displayName || tr("patient", currentLang)}
             />
             <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold flex items-center justify-center">
               {initials}
@@ -143,14 +143,16 @@ function ProfilePage() {
           <div className="w-full space-y-3 pt-2">
             <div className="flex items-center justify-between border-b border-border/40 pb-2.5 text-sm">
               <span className="text-muted-foreground flex items-center gap-2">
-                <UserIcon className="h-4 w-4 text-teal/80" /> Name
+                <UserIcon className="h-4 w-4 text-teal/80" /> {tr("fullName", currentLang)}
               </span>
-              <span className="font-semibold text-foreground">{user.displayName || "Patient"}</span>
+              <span className="font-semibold text-foreground">
+                {user.displayName || tr("patient", currentLang)}
+              </span>
             </div>
 
             <div className="flex items-center justify-between border-b border-border/40 pb-2.5 text-sm">
               <span className="text-muted-foreground flex items-center gap-2">
-                <Mail className="h-4 w-4 text-teal/80" /> Email
+                <Mail className="h-4 w-4 text-teal/80" /> {tr("email", currentLang)}
               </span>
               <span
                 className="font-semibold text-foreground truncate max-w-[220px]"
@@ -162,13 +164,13 @@ function ProfilePage() {
 
             <div className="flex items-center justify-between border-b border-border/40 pb-2.5 text-sm">
               <span className="text-muted-foreground flex items-center gap-2">
-                <Shield className="h-4 w-4 text-teal/80" /> Account Type
+                <Shield className="h-4 w-4 text-teal/80" /> {tr("accountType", currentLang)}
               </span>
               <Badge
                 variant="secondary"
                 className="bg-teal/5 text-teal border border-teal/15 font-medium text-xs px-2 py-0.5"
               >
-                {isGoogle ? "Google Account" : "Email Account"}
+                {isGoogle ? tr("googleAccount", currentLang) : tr("emailAccount", currentLang)}
               </Badge>
             </div>
           </div>
@@ -176,31 +178,33 @@ function ProfilePage() {
           {/* Health Profile Status (Reassessment Panel) */}
           <div className="w-full space-y-2.5 pt-2 text-left border-t border-border/40">
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-teal/80">
-              Health Profile Onboarding
+              {tr("healthProfileOnboarding", currentLang)}
             </h3>
             <Card className="border border-border bg-surface-muted/20 shadow-none">
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <ClipboardList className="h-4 w-4 text-teal" /> Onboarding Status
+                    <ClipboardList className="h-4 w-4 text-teal" />{" "}
+                    {tr("onboardingStatus", currentLang)}
                   </span>
                   {loadingStatus ? (
                     <Loader2 className="h-3 w-3 animate-spin text-teal" />
                   ) : (
                     <Badge className="bg-teal/15 text-teal hover:bg-teal/15 border-teal/10 font-bold rounded-full text-[10px] uppercase">
-                      {assessmentStatus?.hasCompletedAssessment ? "Completed" : "Pending"}
+                      {assessmentStatus?.hasCompletedAssessment
+                        ? tr("completed", currentLang)
+                        : tr("pending", currentLang)}
                     </Badge>
                   )}
                 </CardTitle>
               </CardHeader>
 
               <CardContent className="p-4 pt-0 pb-3 text-xs text-muted-foreground leading-normal">
-                <p>
-                  Your assessment is used to calculate risk scores and personalize your action plan.
-                </p>
+                <p>{tr("onboardingStatusDesc", currentLang)}</p>
                 {assessmentStatus?.lastAssessmentUpdate && (
                   <p className="text-[10px] text-muted-foreground/80 mt-1 font-mono">
-                    Last Updated: {formatDate(assessmentStatus.lastAssessmentUpdate)}
+                    {tr("lastUpdated", currentLang)}:{" "}
+                    {formatDate(assessmentStatus.lastAssessmentUpdate)}
                   </p>
                 )}
               </CardContent>
@@ -221,7 +225,7 @@ function ProfilePage() {
           {/* Quick Actions */}
           <div className="w-full space-y-2.5 pt-2 text-left">
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-teal/80">
-              Quick Actions
+              {tr("quickActions", currentLang)}
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <Button
@@ -231,7 +235,7 @@ function ProfilePage() {
               >
                 <Link to="/report">
                   <FileText className="h-4 w-4 shrink-0" />
-                  <span>View Report</span>
+                  <span>{tr("viewReport", currentLang)}</span>
                 </Link>
               </Button>
               <Button
@@ -241,7 +245,7 @@ function ProfilePage() {
               >
                 <Link to="/dashboard">
                   <Activity className="h-4 w-4 shrink-0" />
-                  <span>Risk Dashboard</span>
+                  <span>{tr("riskDashboard", currentLang)}</span>
                 </Link>
               </Button>
             </div>
@@ -254,7 +258,7 @@ function ProfilePage() {
               variant="destructive"
               className="w-full h-10 gap-2 font-semibold text-sm transition-all duration-200"
             >
-              <LogOut className="h-4 w-4" /> Sign Out
+              <LogOut className="h-4 w-4" /> {tr("signOut", currentLang)}
             </Button>
           </div>
         </CardContent>

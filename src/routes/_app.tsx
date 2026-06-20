@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useLanguage, tr } from "@/lib/i18n";
 import { useAuth } from "@/contexts/auth-context";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -24,12 +25,17 @@ function AppLayout() {
   const { user, loading, syncing, logout, hasCompletedAssessment } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const currentLang = useLanguage();
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate({ to: "/" });
+      if (pathname && pathname !== "/") {
+        navigate({ to: "/login", search: { redirect: pathname } });
+      } else {
+        navigate({ to: "/" });
+      }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, pathname]);
 
   useEffect(() => {
     if (!loading && user && hasCompletedAssessment !== null) {
@@ -45,7 +51,7 @@ function AppLayout() {
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-10 w-10 animate-spin text-teal" />
           <p className="text-sm font-medium text-muted-foreground">
-            {syncing ? "Syncing patient record..." : "Verifying secure credentials..."}
+            {syncing ? tr("syncingRecord", currentLang) : tr("verifyingCredentials", currentLang)}
           </p>
         </div>
       </div>
@@ -71,7 +77,7 @@ function AppLayout() {
           <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur">
             <SidebarTrigger className="-ml-1" />
             <div className="hidden text-sm font-medium text-muted-foreground sm:block">
-              HealthGuard Clinical Platform
+              {tr("clinicalPlatform", currentLang)}
             </div>
 
             <div className="ml-auto flex items-center gap-4">
@@ -87,14 +93,14 @@ function AppLayout() {
                           user.photoURL ||
                           undefined
                         }
-                        alt={user.displayName || "Patient"}
+                        alt={user.displayName || tr("patient", currentLang)}
                       />
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden text-sm font-semibold text-foreground md:inline-block">
-                      {user.displayName || "Patient"}
+                      {user.displayName || tr("patient", currentLang)}
                     </span>
                   </button>
                 </DropdownMenuTrigger>
@@ -102,7 +108,7 @@ function AppLayout() {
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-semibold leading-none text-foreground">
-                        {user.displayName || "Patient"}
+                        {user.displayName || tr("patient", currentLang)}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground truncate">
                         {user.email}
@@ -111,17 +117,17 @@ function AppLayout() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="border-border" />
                   <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link to="/dashboard">Risk Dashboard</Link>
+                    <Link to="/dashboard">{tr("riskDashboard", currentLang)}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link to="/profile">My Profile</Link>
+                    <Link to="/profile">{tr("myProfile", currentLang)}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="border-border" />
                   <DropdownMenuItem
                     onClick={logout}
                     className="text-red-500 hover:bg-red-500/10 cursor-pointer font-medium"
                   >
-                    Log out
+                    {tr("logOut", currentLang)}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -312,11 +312,11 @@ function analyzeRawText(text: string): Omit<IngredientReport, "rawText" | "name"
 function ScannerPage() {
   const currentLang = useLanguage();
   useEffect(() => {
-    document.title = "Smart Ingredient Scanner — HealthGuard";
+    document.title = tr("ingredientsScanner", currentLang) + " — " + tr("appName", currentLang);
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [currentLang]);
 
   const [rawText, setRawText] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -347,10 +347,10 @@ function ScannerPage() {
         videoRef.current.srcObject = stream;
       }
       setIsCameraActive(true);
-      toast.success("Webcam stream activated!");
+      toast.success(tr("fit_webcam_active_toast", currentLang));
     } catch (err) {
       console.error("Camera access error:", err);
-      toast.error("Webcam access failed. Please grant browser permissions.");
+      toast.error(tr("fit_webcam_access_failed_toast", currentLang));
     }
   };
 
@@ -387,10 +387,10 @@ function ScannerPage() {
       });
 
       setReport(result);
-      toast.success("Multimodal label analysis completed!");
+      toast.success(tr("fit_ingredients_analysed_toast", currentLang));
     } catch (err: unknown) {
       console.error("Vision API error, falling back to simulator:", err);
-      toast.error("Vision analysis failed. Falling back to local OCR engine.");
+      toast.error(tr("fit_vision_failed_toast", currentLang));
 
       // Local fallback simulator
       const customReport = analyzeRawText(
@@ -398,7 +398,12 @@ function ScannerPage() {
       );
       setReport({
         ...customReport,
-        name: "Camera Snapshot (Local Analysis)",
+        name:
+          currentLang === "hi"
+            ? "कैमरा स्नैपशॉट (स्थानीय विश्लेषण)"
+            : currentLang === "gu"
+              ? "કેમેરા સ્નેપશોટ (સ્થાનિક વિશ્લેષણ)"
+              : "Camera Snapshot (Local Analysis)",
         rawText:
           "Ingredients: Potato, Palm Oil, Iodised Salt, Sugar, Preservatives, MSG, Wheat Gluten",
       });
@@ -421,7 +426,13 @@ function ScannerPage() {
         rawText: `Preset Ingredients for ${data.name}: ${data.goodIngredients.join(", ")}, ${data.watchOut.join(", ")}`,
       });
       setIsScanning(false);
-      toast.success(`${key} presets matched successfully!`);
+      const matchedMsg =
+        currentLang === "hi"
+          ? "प्रीसेट सफलतापूर्वक मिलान किया गया!"
+          : currentLang === "gu"
+            ? "પ્રીસેટ્સ સફળતાપૂર્વક મેળ ખાતા!"
+            : "presets matched successfully!";
+      toast.success(`${key} ${matchedMsg}`);
     }, 1200);
   };
 
@@ -446,10 +457,10 @@ function ScannerPage() {
             mimeType: file.type,
           });
           setReport(result);
-          toast.success("Multimodal label analysis completed!");
+          toast.success(tr("fit_ingredients_analysed_toast", currentLang));
         } catch (err: unknown) {
           console.error("Vision API error, using simulation match:", err);
-          toast.error("Live analysis failed. Using pattern matching engine.");
+          toast.error(tr("fit_vision_failed_toast", currentLang));
 
           const fileNameLower = file.name.toLowerCase();
           let matchedPresetKey = "";
@@ -505,7 +516,7 @@ function ScannerPage() {
       };
 
       reader.onerror = () => {
-        toast.error("Failed to read file.");
+        toast.error(tr("fit_file_read_failed_toast", currentLang));
         setIsScanning(false);
       };
       reader.readAsDataURL(file);
@@ -515,7 +526,7 @@ function ScannerPage() {
   const handleTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!rawText.trim()) {
-      toast.error("Please enter some ingredients text first.");
+      toast.error(tr("fit_enter_ingredients_toast", currentLang));
       return;
     }
 
@@ -526,15 +537,20 @@ function ScannerPage() {
     try {
       const result = await assessIngredientsText({ rawText });
       setReport(result);
-      toast.success("Ingredients analyzed successfully!");
+      toast.success(tr("fit_ingredients_analysed_toast", currentLang));
     } catch (err: unknown) {
       console.error("Gemini text call failed, using offline engine:", err);
-      toast.error("Direct connection failed. Switched to offline keyword evaluator.");
+      toast.error(tr("fit_direct_connection_failed_toast", currentLang));
 
       const parsed = analyzeRawText(rawText);
       setReport({
         ...parsed,
-        name: "Custom Entry (Offline Evaluated)",
+        name:
+          currentLang === "hi"
+            ? "कस्टम प्रविष्टि (ऑफ़लाइन मूल्यांकन)"
+            : currentLang === "gu"
+              ? "કસ્ટમ એન્ટ્રી (ઑફલાઇન મૂલ્યાંકન)"
+              : "Custom Entry (Offline Evaluated)",
         rawText,
       });
     } finally {
@@ -575,14 +591,13 @@ function ScannerPage() {
           variant="secondary"
           className="rounded-full bg-teal/10 text-teal border border-teal/20 hover:bg-teal/20"
         >
-          Wellness Tool
+          {tr("wellnessTool", currentLang)}
         </Badge>
         <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
           {tr("ingredientsScanner", currentLang)}
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-relaxed">
-          Scan nutrition label photos, ingredient lists, or select a template to highlight potential
-          wellness concerns for Diabetes, Hypertension, and Heart Health.
+          {tr("scannerSubtitle", currentLang)}
         </p>
       </div>
 
@@ -604,7 +619,7 @@ function ScannerPage() {
                   disabled={isScanning}
                   className="h-8 gap-1.5 text-xs border-teal/20 text-teal hover:bg-teal/5 cursor-pointer font-semibold rounded-full"
                 >
-                  <Camera className="h-3.5 w-3.5" /> Camera Scan
+                  <Camera className="h-3.5 w-3.5" /> {tr("cameraScan", currentLang)}
                 </Button>
               ) : (
                 <Button
@@ -613,7 +628,7 @@ function ScannerPage() {
                   onClick={stopCamera}
                   className="h-8 text-xs text-red-500 hover:bg-red-50 cursor-pointer font-semibold"
                 >
-                  Close Camera
+                  {tr("closeCamera", currentLang)}
                 </Button>
               )}
             </CardHeader>
@@ -634,7 +649,7 @@ function ScannerPage() {
                     disabled={isScanning}
                     className="w-full h-10 bg-teal text-white hover:bg-teal/90 gap-2 font-semibold text-xs rounded-lg cursor-pointer"
                   >
-                    <Camera className="h-4 w-4" /> Capture & Scan Ingredients
+                    <Camera className="h-4 w-4" /> {tr("captureScanIngredients", currentLang)}
                   </Button>
                 </div>
               ) : (
@@ -650,10 +665,10 @@ function ScannerPage() {
                     <ScanLine className="h-6 w-6" />
                   </div>
                   <p className="text-xs font-semibold text-foreground text-center">
-                    {selectedFile ? selectedFile.name : "Click or drag nutrition label photo"}
+                    {selectedFile ? selectedFile.name : tr("clickOrDragPhoto", currentLang)}
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1 text-center">
-                    Supports JPEG, PNG, WebP up to 5MB (or scan with webcam above)
+                    {tr("supportsFormats", currentLang)}
                   </p>
                 </div>
               )}
@@ -665,7 +680,7 @@ function ScannerPage() {
             <CardHeader className="pb-3 border-b border-border/40">
               <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-teal" />
-                Indian Food Presets
+                {tr("indianFoodPresets", currentLang)}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
@@ -699,7 +714,7 @@ function ScannerPage() {
                 <Textarea
                   value={rawText}
                   onChange={(e) => setRawText(e.target.value)}
-                  placeholder="e.g. Sugar, cocoa solids, palm kernel oil, emulsifiers, salt, milk solids..."
+                  placeholder={tr("ingredientsPlaceholder", currentLang)}
                   rows={4}
                   className="text-xs border-border/80 bg-surface/50 transition-all duration-200 focus:border-teal focus:ring-teal focus-visible:ring-teal"
                   disabled={isScanning}
@@ -709,7 +724,7 @@ function ScannerPage() {
                   disabled={isScanning || !rawText.trim()}
                   className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm font-semibold text-xs rounded-lg transition-all duration-200"
                 >
-                  Analyze Ingredients
+                  {tr("analyzeIngredients", currentLang)}
                 </Button>
               </form>
             </CardContent>
@@ -724,11 +739,10 @@ function ScannerPage() {
                 <Loader2 className="h-10 w-10 animate-spin text-teal" />
                 <div>
                   <h3 className="font-display text-base font-bold text-foreground">
-                    AI Scanning in Progress...
+                    {tr("aiScanningInProgress", currentLang)}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                    Extracting ingredient names and cross-referencing with metabolic risk
-                    thresholds.
+                    {tr("extractingIngredients", currentLang)}
                   </p>
                 </div>
               </div>
@@ -742,10 +756,10 @@ function ScannerPage() {
                   <ScanLine className="h-6 w-6" />
                 </div>
                 <h3 className="font-display text-base font-bold text-foreground">
-                  No foods scanned yet
+                  {tr("noFoodsScanned", currentLang)}
                 </h3>
                 <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
-                  Upload a food label to receive personalized health insights.
+                  {tr("uploadFoodLabel", currentLang)}
                 </p>
               </div>
             </Card>
@@ -761,7 +775,9 @@ function ScannerPage() {
                     <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/5 p-4 flex items-start gap-3">
                       <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                       <div>
-                        <div className="text-xs font-bold text-red-600">Goal Conflict Detected</div>
+                        <div className="text-xs font-bold text-red-600">
+                          {tr("goalConflictDetected", currentLang)}
+                        </div>
                         <p className="text-[11px] text-red-600/90 mt-0.5 font-semibold">
                           {report.conflict.message}
                         </p>
@@ -772,7 +788,7 @@ function ScannerPage() {
                   <div className="flex flex-col sm:flex-row items-center gap-6 justify-between border-b border-border/40 pb-6 mb-6">
                     <div className="text-center sm:text-left space-y-1">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-teal">
-                        Nutrition Audit
+                        {tr("nutritionAudit", currentLang)}
                       </span>
                       <h2 className="font-display text-xl font-extrabold text-foreground leading-tight">
                         {report.name}
@@ -783,7 +799,7 @@ function ScannerPage() {
                     <div className="flex flex-wrap items-center gap-4 bg-surface-muted/20 border border-border/40 p-3.5 rounded-2xl">
                       <div className="text-right">
                         <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                          Base Food Score
+                          {tr("baseFoodScore", currentLang)}
                         </div>
                         <div className="text-xs font-bold text-foreground">
                           {report.foodScore ?? report.score}/10
@@ -792,7 +808,7 @@ function ScannerPage() {
                       <div className="h-8 w-[1px] bg-border/60" />
                       <div className="text-right">
                         <div className="text-[10px] font-bold uppercase tracking-wider text-teal font-mono">
-                          Personalized
+                          {tr("personalized", currentLang)}
                         </div>
                         <div
                           className={`text-base font-extrabold ${getScoreTextColor(report.personalizedScore ?? report.score)}`}
@@ -811,7 +827,7 @@ function ScannerPage() {
                   {/* Recommendation Card */}
                   <div className="rounded-xl border border-border bg-surface-muted/30 p-5 shadow-sm space-y-2">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-teal">
-                      Personalized Impact Recommendation
+                      {tr("personalizedImpactRec", currentLang)}
                     </div>
                     <p className="text-xs leading-relaxed text-foreground/90 font-medium">
                       "{report.recommendation}"
@@ -821,6 +837,7 @@ function ScannerPage() {
               </Card>
 
               {/* Diagnosis Grid */}
+              {/* Diagnosis Grid */}
               <div className="grid gap-4 sm:grid-cols-3">
                 {/* Diabetes */}
                 <Card className="border-border bg-surface shadow-card-soft">
@@ -829,21 +846,21 @@ function ScannerPage() {
                       <div className="flex items-center gap-1.5 text-red-500">
                         <Brain className="h-4.5 w-4.5 shrink-0" />
                         <h4 className="font-display text-xs font-bold text-foreground">
-                          Glycemic Impact
+                          {tr("glycemicImpact", currentLang)}
                         </h4>
                       </div>
                       {report.diabetesImpactPoints !== undefined ? (
                         report.diabetesImpactPoints >= 8 ? (
                           <Badge className="bg-red-500/10 text-red-600 border border-red-500/20 text-[9px] font-bold py-0 px-1.5">
-                            ↑ High
+                            ↑ {tr("highRisk", currentLang)}
                           </Badge>
                         ) : report.diabetesImpactPoints > 0 ? (
                           <Badge className="bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[9px] font-bold py-0 px-1.5">
-                            → Mod
+                            → {tr("modRisk", currentLang)}
                           </Badge>
                         ) : (
                           <Badge className="bg-green-500/10 text-green-600 border border-green-500/20 text-[9px] font-bold py-0 px-1.5">
-                            ✓ Low
+                            ✓ {tr("low", currentLang)}
                           </Badge>
                         )
                       ) : null}
@@ -861,21 +878,21 @@ function ScannerPage() {
                       <div className="flex items-center gap-1.5 text-teal">
                         <Activity className="h-4.5 w-4.5 shrink-0" />
                         <h4 className="font-display text-xs font-bold text-foreground">
-                          Vascular Impact
+                          {tr("vascularImpact", currentLang)}
                         </h4>
                       </div>
                       {report.hypertensionImpactPoints !== undefined ? (
                         report.hypertensionImpactPoints >= 8 ? (
                           <Badge className="bg-red-500/10 text-red-600 border border-red-500/20 text-[9px] font-bold py-0 px-1.5">
-                            ↑ High
+                            ↑ {tr("highRisk", currentLang)}
                           </Badge>
                         ) : report.hypertensionImpactPoints > 0 ? (
                           <Badge className="bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[9px] font-bold py-0 px-1.5">
-                            → Mod
+                            → {tr("modRisk", currentLang)}
                           </Badge>
                         ) : (
                           <Badge className="bg-green-500/10 text-green-600 border border-green-500/20 text-[9px] font-bold py-0 px-1.5">
-                            ✓ Low
+                            ✓ {tr("low", currentLang)}
                           </Badge>
                         )
                       ) : null}
@@ -893,21 +910,21 @@ function ScannerPage() {
                       <div className="flex items-center gap-1.5 text-primary">
                         <Heart className="h-4.5 w-4.5 shrink-0" />
                         <h4 className="font-display text-xs font-bold text-foreground">
-                          Cardiac Impact
+                          {tr("cardiacImpact", currentLang)}
                         </h4>
                       </div>
                       {report.heartImpactPoints !== undefined ? (
                         report.heartImpactPoints >= 8 ? (
                           <Badge className="bg-red-500/10 text-red-600 border border-red-500/20 text-[9px] font-bold py-0 px-1.5">
-                            ↑ High
+                            ↑ {tr("highRisk", currentLang)}
                           </Badge>
                         ) : report.heartImpactPoints > 0 ? (
                           <Badge className="bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[9px] font-bold py-0 px-1.5">
-                            → Mod
+                            → {tr("modRisk", currentLang)}
                           </Badge>
                         ) : (
                           <Badge className="bg-green-500/10 text-green-600 border border-green-500/20 text-[9px] font-bold py-0 px-1.5">
-                            ✓ Low
+                            ✓ {tr("low", currentLang)}
                           </Badge>
                         )
                       ) : null}
@@ -924,13 +941,13 @@ function ScannerPage() {
                 <Card className="border-border bg-surface shadow-card-soft">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-teal animate-pulse-slow" /> Recommended
-                      Alternatives
+                      <Sparkles className="h-4 w-4 text-teal animate-pulse-slow" />{" "}
+                      {tr("recommendedAlternatives", currentLang)}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-5">
                     <p className="text-xs text-muted-foreground mb-4">
-                      Based on your risk profile, consider these clean, regional options instead:
+                      {tr("alternativesSub", currentLang)}
                     </p>
                     <div className="grid gap-3 sm:grid-cols-3">
                       {report.alternatives.map((alt, idx) => (
@@ -954,7 +971,7 @@ function ScannerPage() {
                   <div className="space-y-3">
                     <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
                       <CheckCircle className="h-4.5 w-4.5 text-green-500" />
-                      Beneficial Ingredients Detected ({report.goodIngredients.length})
+                      {tr("beneficialIngredients", currentLang)} ({report.goodIngredients.length})
                     </h3>
                     {report.goodIngredients.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
@@ -970,7 +987,7 @@ function ScannerPage() {
                       </div>
                     ) : (
                       <p className="text-xs text-muted-foreground italic">
-                        No highly beneficial natural ingredients identified in primary listings.
+                        {tr("noBeneficialIngredients", currentLang)}
                       </p>
                     )}
                   </div>
@@ -979,7 +996,7 @@ function ScannerPage() {
                   <div className="space-y-3 pt-4 border-t border-border/40">
                     <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
                       <AlertTriangle className="h-4.5 w-4.5 text-red-500" />
-                      Concerning Ingredients / Additives ({report.watchOut.length})
+                      {tr("concerningIngredients", currentLang)} ({report.watchOut.length})
                     </h3>
                     {report.watchOut.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
@@ -995,8 +1012,8 @@ function ScannerPage() {
                       </div>
                     ) : (
                       <p className="text-xs text-green-600 font-semibold flex items-center gap-1">
-                        <CheckCircle className="h-3.5 w-3.5" /> No high-risk sweeteners, high
-                        sodium, or trans fats found in main ingredients.
+                        <CheckCircle className="h-3.5 w-3.5" />{" "}
+                        {tr("noConcerningIngredients", currentLang)}
                       </p>
                     )}
                   </div>
@@ -1009,7 +1026,7 @@ function ScannerPage() {
                       className="text-xs font-semibold hover:bg-accent/40 border-border/80 gap-2 h-9 rounded-lg"
                     >
                       <RefreshCw className="h-3 w-3" />
-                      Scan Another Item
+                      {tr("scanAnother", currentLang)}
                     </Button>
                   </div>
                 </CardContent>

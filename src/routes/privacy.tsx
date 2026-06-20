@@ -5,15 +5,18 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShieldCheck, EyeOff, Lock, Database, Trash2, Key } from "lucide-react";
+import { useLanguage, tr } from "@/lib/i18n";
 
 export const Route = createFileRoute("/privacy")({
   component: PrivacyPage,
 });
 
 function PrivacyPage() {
+  const currentLang = useLanguage();
+
   useEffect(() => {
-    document.title = "Privacy — HealthGuard";
-  }, []);
+    document.title = `${tr("privacyTitle", currentLang)} — HealthGuard`;
+  }, [currentLang]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-between">
@@ -28,14 +31,13 @@ function PrivacyPage() {
               variant="secondary"
               className="rounded-full bg-teal/10 text-teal border border-teal/20 hover:bg-teal/20"
             >
-              Data Privacy & Security
+              {tr("dataPrivacySecurity", currentLang)}
             </Badge>
             <h1 className="mt-4 font-display text-4xl sm:text-5xl font-bold leading-tight tracking-tight text-foreground">
-              Your Health Data belongs to You
+              {tr("yourHealthDataBelongsToYou", currentLang)}
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-              At HealthGuard, privacy isn't a setting—it's a core design principle. We believe that
-              personal medical intelligence should be strictly private and fully under your control.
+              {tr("privacyHeroDesc", currentLang)}
             </p>
           </div>
         </section>
@@ -46,33 +48,33 @@ function PrivacyPage() {
             {[
               {
                 icon: ShieldCheck,
-                title: "On-Device Processing First",
-                desc: "By default, your health parameters (BMI, smoking status, family history) are processed locally in your browser session. No medical details are sent to a remote server without your consent.",
+                title: tr("p1Title", currentLang),
+                desc: tr("p1Desc", currentLang),
               },
               {
                 icon: EyeOff,
-                title: "No Data Brokerage",
-                desc: "We do not sell, share, rent, or monetize your health information, inputs, or generated risk profiles. Your data remains strictly confidential and closed to third-party trackers.",
+                title: tr("p2Title", currentLang),
+                desc: tr("p2Desc", currentLang),
               },
               {
                 icon: Lock,
-                title: "Optional Private Sync",
-                desc: "If you choose to register an account, your data is securely synced with a private, authenticated Firebase Firestore database. This data is protected by industry-standard row-level security policies.",
+                title: tr("p3Title", currentLang),
+                desc: tr("p3Desc", currentLang),
               },
               {
                 icon: Database,
-                title: "Transparent Storage",
-                desc: "All session metrics, completed questionnaires, and calculated scores are stored in your browser's local storage. You can inspect or clear this data instantly at any time.",
+                title: tr("p4Title", currentLang),
+                desc: tr("p4Desc", currentLang),
               },
               {
                 icon: Trash2,
-                title: "Right to Erasure",
-                desc: "Deleting your account or logging out clears all personalized session data. We provide simple, one-click options to wipe your record from the database completely.",
+                title: tr("p5Title", currentLang),
+                desc: tr("p5Desc", currentLang),
               },
               {
                 icon: Key,
-                title: "Secure Authentication",
-                desc: "We utilize Firebase Authentication for secure email and OAuth flows, ensuring that only you have the keys to view your medical risk summaries and dietitian schedules.",
+                title: tr("p6Title", currentLang),
+                desc: tr("p6Desc", currentLang),
               },
             ].map((p, idx) => (
               <Card
@@ -97,13 +99,10 @@ function PrivacyPage() {
         <section className="border-t border-border bg-surface-muted/20 py-16">
           <div className="mx-auto max-w-4xl px-6 text-center">
             <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
-              Educational Project Transparency
+              {tr("eduTransparencyTitle", currentLang)}
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              HealthGuard is developed strictly as an educational and demonstration project. Unlike
-              commercial platforms, we do not deploy analytics trackers (such as Google Analytics or
-              Meta Pixel), ad networks, or marketing cookies. Your browsing behavior and assessment
-              logs are purely yours.
+              {tr("eduTransparencyDesc", currentLang)}
             </p>
           </div>
         </section>

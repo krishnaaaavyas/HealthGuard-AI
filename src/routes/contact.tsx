@@ -34,15 +34,19 @@ import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/auth-context";
 import { db, isConfigured } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useLanguage, tr } from "@/lib/i18n";
 
 export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
 function ContactPage() {
+  const currentLang = useLanguage();
+
   useEffect(() => {
-    document.title = "Contact & Portfolio — HealthGuard";
-  }, []);
+    document.title = `${tr("support", currentLang)} & Portfolio — HealthGuard`;
+  }, [currentLang]);
+
   const { user } = useAuth();
   const [sending, setSending] = useState(false);
 
@@ -68,11 +72,11 @@ function ContactPage() {
       } else {
         console.warn("Firebase is not configured. Local submission only.");
       }
-      toast.success("Feedback submitted successfully! Thank you.");
+      toast.success(tr("feedbackSuccess", currentLang));
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error("Feedback submit failed:", err);
-      toast.error("Failed to submit feedback. Please try again.");
+      toast.error(tr("feedbackError", currentLang));
     } finally {
       setSending(false);
     }
@@ -90,14 +94,13 @@ function ContactPage() {
             variant="secondary"
             className="rounded-full bg-teal/10 text-teal border border-teal/20 hover:bg-teal/20"
           >
-            Project Portfolio & Support
+            {tr("projectPortfolioSupport", currentLang)}
           </Badge>
           <h1 className="mt-3 font-display text-4xl font-bold tracking-tight">
-            About HealthGuard AI
+            {tr("aboutPlatformTitle", currentLang)}
           </h1>
           <p className="mt-3 max-w-2xl text-base text-muted-foreground">
-            Learn more about the project mission, developers, frequently asked questions, and submit
-            your feedback.
+            {tr("aboutPlatformDesc", currentLang)}
           </p>
         </div>
       </section>
@@ -108,21 +111,16 @@ function ContactPage() {
           <CardContent className="p-6 sm:p-8 space-y-6">
             <div>
               <h2 className="font-display text-2xl font-bold tracking-tight flex items-center gap-2 text-foreground">
-                <HeartPulse className="h-6 w-6 text-teal" /> About HealthGuard
+                <HeartPulse className="h-6 w-6 text-teal" /> {tr("aboutPlatformTitle", currentLang)}
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                HealthGuard is a personal project built to help people learn about and prevent major
-                chronic illnesses—specifically Type 2 Diabetes, Hypertension (high blood pressure),
-                and Heart Disease. By answering a few everyday questions about your habits, family
-                history, and symptoms, you get an instant understanding of your potential risks
-                along with simple, actionable diet and exercise guides to help you live a healthier,
-                preventive lifestyle.
+                {tr("contactAboutDesc", currentLang)}
               </p>
             </div>
 
             <div className="border-t border-border pt-6">
               <h3 className="font-display text-xl font-bold tracking-tight text-foreground">
-                Developer Information
+                {tr("devInfoTitle", currentLang)}
               </h3>
 
               <div className="grid gap-4 sm:grid-cols-2 mt-4">
@@ -131,10 +129,11 @@ function ContactPage() {
                   <CardContent className="p-5 flex flex-col justify-between flex-1 space-y-3">
                     <div className="space-y-1">
                       <div className="text-sm font-bold text-foreground">Krish Savaliya</div>
-                      <div className="text-xs text-teal font-medium">Software Developer</div>
+                      <div className="text-xs text-teal font-medium">
+                        {tr("softwareDeveloper", currentLang)}
+                      </div>
                       <p className="text-xs text-muted-foreground leading-relaxed pt-1">
-                        Focused on building clean, intuitive frontend interfaces and responsive data
-                        flows.
+                        {tr("krishDesc", currentLang)}
                       </p>
                     </div>
                     <div className="flex gap-2 pt-2.5 border-t border-border/40">
@@ -181,10 +180,11 @@ function ContactPage() {
                   <CardContent className="p-5 flex flex-col justify-between flex-1 space-y-3">
                     <div className="space-y-1">
                       <div className="text-sm font-bold text-foreground">Krishna Vyas</div>
-                      <div className="text-xs text-teal font-medium">Software Developer</div>
+                      <div className="text-xs text-teal font-medium">
+                        {tr("softwareDeveloper", currentLang)}
+                      </div>
                       <p className="text-xs text-muted-foreground leading-relaxed pt-1">
-                        Specialized in clinical logic integration, AI modeling, and backend database
-                        systems.
+                        {tr("krishnaDesc", currentLang)}
                       </p>
                     </div>
                     <div className="flex gap-2 pt-2.5 border-t border-border/40">
@@ -240,31 +240,31 @@ function ContactPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <MessagesSquare className="h-5 w-5 text-teal" />
                   <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
-                    Frequently Asked Questions
+                    {tr("faqContactTitle", currentLang)}
                   </h2>
                 </div>
 
                 <Accordion type="single" collapsible className="w-full space-y-1">
                   {[
                     {
-                      q: "How are the risk scores calculated?",
-                      a: "HealthGuard runs a multi-factorial deterministic calculation based on guidelines like ADA (American Diabetes Association) and AHA (American Heart Association). It evaluates age, body dimensions, physical exercise, tobacco habits, symptoms, and family records.",
+                      q: tr("faqContact1Q", currentLang),
+                      a: tr("faqContact1A", currentLang),
                     },
                     {
-                      q: "Is my personal data secure?",
-                      a: "Yes, all assessment data is stored locally in your browser storage. If you sign in, it is synchronized using a secure, private Firestore instance. Your credentials and medical profiles are never shared.",
+                      q: tr("faqContact2Q", currentLang),
+                      a: tr("faqContact2A", currentLang),
                     },
                     {
-                      q: "Can I export my prevention plans?",
-                      a: "Absolutely. Once the assessment is finished, navigate to the Reports tab or the dashboard top panel and click 'Download PDF' to save a printer-ready copy of your parameters and plans.",
+                      q: tr("faqContact3Q", currentLang),
+                      a: tr("faqContact3A", currentLang),
                     },
                     {
-                      q: "How does the AI create diet & exercise plans?",
-                      a: "The clinical AI engine takes your calculated BMI, dietary habits, and physical activity level, then structures tailored guidelines. The diet schedule uses kitchen-familiar Indian vegetarian and non-vegetarian menus.",
+                      q: tr("faqContact4Q", currentLang),
+                      a: tr("faqContact4A", currentLang),
                     },
                     {
-                      q: "Does this replace a clinical diagnosis?",
-                      a: "No. HealthGuard is strictly an educational tool to raise preventive healthcare awareness. It is not an FDA-approved diagnostic service. Please consult a primary physician for clinical examinations.",
+                      q: tr("faqContact5Q", currentLang),
+                      a: tr("faqContact5A", currentLang),
                     },
                   ].map((faq, idx) => (
                     <AccordionItem
@@ -288,14 +288,11 @@ function ContactPage() {
             <Card className="border-border/80 bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
               <CardContent className="p-6 space-y-3">
                 <h2 className="font-display text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
-                  <BookOpen className="h-5 w-5 text-teal" /> Educational Disclaimer
+                  <BookOpen className="h-5 w-5 text-teal" />{" "}
+                  {tr("educationalDisclaimer", currentLang)}
                 </h2>
                 <div className="rounded-lg border border-warning/30 bg-warning/5 p-4 text-xs leading-relaxed text-muted-foreground">
-                  ⚠️ <strong className="text-foreground">Informational Only:</strong> This platform
-                  is developed strictly for educational and portfolio demonstration purposes. All
-                  calculated risk ratings, rationales, diet suggestions, and exercise schedules are
-                  generated by AI models for guidance and should not be used as clinical diagnostic
-                  advice or as a replacement for qualified medical consultations.
+                  ⚠️ {tr("educationalDisclaimerDesc", currentLang)}
                 </div>
               </CardContent>
             </Card>
@@ -307,16 +304,16 @@ function ContactPage() {
               <CardContent className="p-6 flex flex-col justify-between h-full">
                 <div>
                   <h2 className="font-display text-xl font-bold tracking-tight">
-                    Project Feedback
+                    {tr("projectFeedback", currentLang)}
                   </h2>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Have comments or questions? Drop a message below to let us know.
+                    {tr("projectFeedbackDesc", currentLang)}
                   </p>
 
                   <form onSubmit={submit} className="mt-5 space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="name" className="text-xs">
-                        Full name
+                        {tr("fullName", currentLang)}
                       </Label>
                       <Input
                         id="name"
@@ -328,7 +325,7 @@ function ContactPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email" className="text-xs">
-                        Email
+                        {tr("email", currentLang)}
                       </Label>
                       <Input
                         id="email"
@@ -341,14 +338,14 @@ function ContactPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="message" className="text-xs">
-                        Message
+                        {tr("message", currentLang)}
                       </Label>
                       <Textarea
                         id="message"
                         name="message"
                         required
                         rows={4}
-                        placeholder="Your thoughts on the project..."
+                        placeholder={tr("yourThoughtsPlaceholder", currentLang)}
                         className="border-border/80 bg-surface/50 text-xs transition-all duration-200 focus:border-teal focus:ring-teal focus-visible:ring-teal"
                       />
                     </div>
@@ -359,7 +356,7 @@ function ContactPage() {
                         className="w-full sm:w-auto gap-2 bg-primary text-primary-foreground hover:bg-primary/95 transition-all duration-200 font-semibold shadow-sm text-xs h-9"
                       >
                         <Send className="h-3.5 w-3.5" />
-                        {sending ? "Sending…" : "Submit Feedback"}
+                        {sending ? tr("sending", currentLang) : tr("submitFeedback", currentLang)}
                       </Button>
                     </div>
                   </form>

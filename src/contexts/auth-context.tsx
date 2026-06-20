@@ -77,7 +77,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let hasCompleted = false;
         const isOffline = !navigator.onLine;
         const uid = firebaseUser.uid;
-        console.log(`[Firestore Debug] Starting flow for user ${uid}. Offline status: ${isOffline}`);
+        console.log(
+          `[Firestore Debug] Starting flow for user ${uid}. Offline status: ${isOffline}`,
+        );
         try {
           if (isOffline) {
             throw new Error("offline");
@@ -86,14 +88,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           console.log(`[Firestore Debug] Fetching user doc: users/${uid}`);
           const startTime = Date.now();
-          
+
           // 2s timeout race to prevent hangs on flaky connections
           const userDocSnap = await Promise.race([
             getDoc(userDocRef),
             new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000)),
           ]);
-          
-          console.log(`[Firestore Debug] Fetch completed in ${Date.now() - startTime}ms. Exists: ${userDocSnap.exists()}`);
+
+          console.log(
+            `[Firestore Debug] Fetch completed in ${Date.now() - startTime}ms. Exists: ${userDocSnap.exists()}`,
+          );
 
           if (!userDocSnap.exists()) {
             const initialDoc = {
@@ -104,10 +108,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: serverTimestamp(),
               lastLoginAt: serverTimestamp(),
             };
-            console.log(`[Firestore Debug] User doc does not exist. Creating via setDoc users/${uid} with payload:`, initialDoc);
+            console.log(
+              `[Firestore Debug] User doc does not exist. Creating via setDoc users/${uid} with payload:`,
+              initialDoc,
+            );
             const createStartTime = Date.now();
             await setDoc(userDocRef, initialDoc);
-            console.log(`[Firestore Debug] User doc created successfully in ${Date.now() - createStartTime}ms`);
+            console.log(
+              `[Firestore Debug] User doc created successfully in ${Date.now() - createStartTime}ms`,
+            );
             hasCompleted = false;
           } else {
             const userData = userDocSnap.data();
@@ -119,16 +128,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               console.log(`[Firestore Debug] Updating lastLoginAt for users/${uid}`);
               const updateStartTime = Date.now();
               await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
-              console.log(`[Firestore Debug] lastLoginAt updated successfully in ${Date.now() - updateStartTime}ms`);
+              console.log(
+                `[Firestore Debug] lastLoginAt updated successfully in ${Date.now() - updateStartTime}ms`,
+              );
             } catch (lastLoginErr) {
               console.error(`[Firestore Debug] Failed to update lastLoginAt:`, lastLoginErr);
             }
           }
           setHasCompletedAssessment(hasCompleted);
         } catch (dbErr: unknown) {
-          console.error("[Firestore Debug] Error fetching/creating user doc in auth-context:", dbErr);
+          console.error(
+            "[Firestore Debug] Error fetching/creating user doc in auth-context:",
+            dbErr,
+          );
           const e = dbErr as { message?: string; code?: string; stack?: string };
-          console.error(`[Firestore Debug] Details - Code: ${e?.code || "N/A"}, Message: ${e?.message || "N/A"}, Stack: ${e?.stack || "N/A"}`);
+          console.error(
+            `[Firestore Debug] Details - Code: ${e?.code || "N/A"}, Message: ${e?.message || "N/A"}, Stack: ${e?.stack || "N/A"}`,
+          );
           const errMsg = e?.message || "";
           const isOfflineError =
             isOffline ||

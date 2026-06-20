@@ -1,6 +1,9 @@
 import { HeartPulse } from "lucide-react";
+import { useLanguage, tr } from "@/lib/i18n";
 
 export function SiteFooter() {
+  const currentLang = useLanguage();
+
   return (
     <footer className="border-t border-border bg-surface-muted/30">
       <div className="mx-auto max-w-7xl px-6 py-12">
@@ -16,28 +19,26 @@ export function SiteFooter() {
               </div>
             </div>
             <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-              An AI-powered preventive health intelligence portal built to evaluate metabolic and
-              cardiovascular risk factors. It maps basic lifestyle indicators against evidence-based
-              reference guidelines to generate personalized wellness recommendations.
+              {tr("footerDesc", currentLang)}
             </p>
           </div>
 
           {/* Focus Areas */}
           <div className="md:col-span-3 space-y-3">
             <div className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
-              Focus Areas
+              {tr("focusAreas", currentLang)}
             </div>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Type 2 Diabetes</li>
-              <li>Hypertension</li>
-              <li>Heart Disease</li>
+              <li>{tr("diabetes", currentLang)}</li>
+              <li>{tr("hypertension", currentLang)}</li>
+              <li>{tr("heartDisease", currentLang)}</li>
             </ul>
           </div>
 
           {/* Developers */}
           <div className="md:col-span-3 space-y-3">
             <div className="text-xs font-semibold uppercase tracking-wider text-foreground font-mono">
-              Developers
+              {tr("developers", currentLang)}
             </div>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>Krish Savaliya</li>
@@ -49,13 +50,13 @@ export function SiteFooter() {
         {/* Separator & Disclaimer */}
         <div className="mt-12 border-t border-border pt-8 flex flex-col gap-4">
           <p className="text-xs leading-relaxed text-muted-foreground">
-            <strong className="text-foreground font-semibold">Disclaimer:</strong> This project
-            provides health risk awareness and preventive guidance. It is not a medical diagnosis
-            tool.
+            {tr("footerDisclaimer", currentLang)}
           </p>
           <div className="text-xs text-muted-foreground/80">
-            © {new Date().getFullYear()} HealthGuard. Developed strictly for educational and
-            demonstration purposes.
+            {tr("fit_report_copyright", currentLang).replace(
+              "{year}",
+              new Date().getFullYear().toString(),
+            )}
           </div>
         </div>
       </div>

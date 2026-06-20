@@ -194,9 +194,9 @@ function ExpertReviewPage() {
   const [devRegistering, setDevRegistering] = useState(false);
 
   useEffect(() => {
-    document.title = "Expert Clinical Review — HealthGuard";
+    document.title = tr("expertClinicalReview", currentLang) + " — " + tr("appName", currentLang);
     fetchRequests();
-  }, []);
+  }, [currentLang]);
 
   const fetchRequests = async () => {
     try {
@@ -251,7 +251,7 @@ function ExpertReviewPage() {
 
   const handleRequestReview = async () => {
     if (!profile || !result) {
-      toast.error("Please complete your assessment questionnaire first.");
+      toast.error(tr("fit_please_complete", currentLang));
       return;
     }
     setSubmitting(true);
@@ -269,7 +269,13 @@ function ExpertReviewPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success("Expert review request submitted successfully.");
+        const succMsg =
+          currentLang === "hi"
+            ? "विशेषज्ञ समीक्षा अनुरोध सफलतापूर्वक सबमिट किया गया।"
+            : currentLang === "gu"
+              ? "નિષ્ણાત સમીક્ષા વિનંતી સફળતાપૂર્વક સબમિટ કરવામાં આવી છે."
+              : "Expert review request submitted successfully.";
+        toast.success(succMsg);
         fetchRequests();
       } else {
         toast.error(data.error || "Failed to submit request.");
@@ -297,7 +303,13 @@ function ExpertReviewPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success("Review request cancelled successfully.");
+        const cancelMsg =
+          currentLang === "hi"
+            ? "समीक्षा अनुरोध सफलतापूर्वक रद्द किया गया।"
+            : currentLang === "gu"
+              ? "સમીક્ષા વિનંતી સફળતાપૂર્વક રદ કરવામાં આવી છે."
+              : "Review request cancelled successfully.";
+        toast.success(cancelMsg);
         fetchRequests();
       } else {
         toast.error(data.error || "Failed to cancel request.");
@@ -362,7 +374,7 @@ function ExpertReviewPage() {
       <div className="flex h-[75vh] flex-col items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-teal" />
         <p className="mt-2 text-sm text-muted-foreground font-semibold">
-          Loading Expert Review Center...
+          {tr("loadingExpertCenter", currentLang)}
         </p>
       </div>
     );
@@ -420,7 +432,12 @@ function ExpertReviewPage() {
               className="text-[10px] h-7 bg-teal hover:bg-teal/95 font-semibold text-white"
             >
               <Link to="/expert-dashboard">
-                Open Expert Dashboard <ArrowRight className="ml-1 h-3 w-3" />
+                {currentLang === "hi"
+                  ? "विशेषज्ञ डैशबोर्ड खोलें"
+                  : currentLang === "gu"
+                    ? "નિષ્ણાત ડેશબોર્ડ ખોલો"
+                    : "Open Expert Dashboard"}{" "}
+                <ArrowRight className="ml-1 h-3 w-3" />
               </Link>
             </Button>
           </div>
@@ -439,23 +456,22 @@ function ExpertReviewPage() {
               <Stethoscope className="h-7 w-7" />
             </div>
             <CardTitle className="font-display text-2xl font-bold">
-              Request Professional Review
+              {tr("requestProfessionalReview", currentLang)}
             </CardTitle>
             <CardDescription className="max-w-md mx-auto mt-2">
-              Share your digital profile, risk assessments, BMI drivers, and scanned foods securely
-              with a clinical expert.
+              {tr("requestProfessionalReviewDesc", currentLang)}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 px-8 py-4">
             <div className="rounded-xl border border-border bg-surface-muted/30 p-5 space-y-4 max-w-2xl mx-auto">
               <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
-                <Activity className="h-4 w-4 text-teal" /> What is shared with the Expert?
+                <Activity className="h-4 w-4 text-teal" /> {tr("whatIsShared", currentLang)}
               </h3>
               <ul className="text-xs text-muted-foreground space-y-2 pl-6 list-disc">
-                <li>Your clinical risk summary (diabetes, heart, hypertension risk results).</li>
-                <li>Your profile details (age, height, weight, BMI, and lifestyle activities).</li>
-                <li>Your top priority action recommendations computed by the impact engine.</li>
-                <li>Your scanned food records and nutrition dashboard insights.</li>
+                <li>{tr("sharedItem1", currentLang)}</li>
+                <li>{tr("sharedItem2", currentLang)}</li>
+                <li>{tr("sharedItem3", currentLang)}</li>
+                <li>{tr("sharedItem4", currentLang)}</li>
               </ul>
             </div>
 
@@ -464,15 +480,14 @@ function ExpertReviewPage() {
               <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 p-4 flex gap-3">
                 <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                 <div className="space-y-1 text-xs">
-                  <p className="font-bold text-foreground">Safety & Trust Disclaimer</p>
+                  <p className="font-bold text-foreground">
+                    {tr("safetyDisclaimerTitle", currentLang)}
+                  </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    Expert Review is for educational and lifestyle guidance only. It does not
-                    replace emergency medical care, diagnostic consulting, or prescription-based
-                    medical treatment.
+                    {tr("safetyDisclaimerDesc", currentLang)}
                   </p>
                   <p className="text-amber-500/90 font-semibold leading-relaxed mt-1">
-                    Do not share emergency symptoms here. Seek immediate emergency clinical help if
-                    you feel unwell.
+                    {tr("safetyDisclaimerWarning", currentLang)}
                   </p>
                 </div>
               </div>
@@ -486,11 +501,12 @@ function ExpertReviewPage() {
             >
               {submitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Submitting Request...
+                  <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                  {tr("submittingRequest", currentLang)}
                 </>
               ) : (
                 <>
-                  <Stethoscope className="h-4 w-4" /> Request Expert Review
+                  <Stethoscope className="h-4 w-4" /> {tr("requestExpertReviewBtn", currentLang)}
                 </>
               )}
             </Button>
@@ -505,25 +521,27 @@ function ExpertReviewPage() {
             <Card className="border-border bg-surface shadow-card-soft overflow-hidden">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                  Request Details
+                  {tr("requestDetails", currentLang)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between border-b border-border/50 pb-3">
-                  <span className="text-xs text-muted-foreground">Status</span>
+                  <span className="text-xs text-muted-foreground">
+                    {tr("fit_status", currentLang)}
+                  </span>
                   {isPending && (
                     <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/10 border border-amber-500/20 gap-1 rounded-full font-bold">
-                      <Clock className="h-3.5 w-3.5" /> Pending Review
+                      <Clock className="h-3.5 w-3.5" /> {tr("pendingReview", currentLang)}
                     </Badge>
                   )}
                   {isAccepted && (
                     <Badge className="bg-teal/10 text-teal hover:bg-teal/10 border border-teal/20 gap-1 rounded-full font-bold">
-                      <MessageSquare className="h-3.5 w-3.5" /> Active Chat
+                      <MessageSquare className="h-3.5 w-3.5" /> {tr("activeChat", currentLang)}
                     </Badge>
                   )}
                   {isCompleted && (
                     <Badge className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/10 border border-blue-500/20 gap-1 rounded-full font-bold">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Completed
+                      <CheckCircle2 className="h-3.5 w-3.5" /> {tr("completed", currentLang)}
                     </Badge>
                   )}
                 </div>
@@ -539,14 +557,16 @@ function ExpertReviewPage() {
                       <p className="text-xs font-bold text-foreground">
                         {activeRequest.assignedExpertName}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">Assigned Expert Counselor</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {tr("assignedExpert", currentLang)}
+                      </p>
                     </div>
                   </div>
                 )}
 
                 <div className="flex flex-col gap-1 text-[11px] text-muted-foreground leading-normal">
                   <p>
-                    <strong>Submitted:</strong>{" "}
+                    <strong>{tr("submittedLabel", currentLang)}</strong>{" "}
                     {new Date(activeRequest.createdAt).toLocaleDateString()}{" "}
                     {new Date(activeRequest.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
@@ -554,7 +574,7 @@ function ExpertReviewPage() {
                     })}
                   </p>
                   <p>
-                    <strong>Request ID:</strong>{" "}
+                    <strong>{tr("requestIdLabel", currentLang)}</strong>{" "}
                     <code className="bg-muted px-1 py-0.5 rounded text-[10px] select-all">
                       {activeRequest.id}
                     </code>
@@ -573,7 +593,7 @@ function ExpertReviewPage() {
                     ) : (
                       <XCircle className="h-3.5 w-3.5" />
                     )}
-                    Cancel Request
+                    {tr("cancelRequest", currentLang)}
                   </Button>
                 )}
               </CardContent>
@@ -583,47 +603,64 @@ function ExpertReviewPage() {
             <Card className="border-border bg-surface shadow-card-soft">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                  Snapshot Shared
+                  {tr("snapshotShared", currentLang)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-xs leading-normal">
                 <div className="grid grid-cols-2 gap-2 bg-surface-muted/30 p-2.5 rounded-lg border border-border/60 font-mono text-[10px]">
                   <div>
-                    Age:{" "}
+                    {tr("age", currentLang)}:{" "}
                     <span className="font-bold text-foreground">
                       {activeRequest.profileSnapshot?.age}
                     </span>
                   </div>
                   <div>
-                    Gender:{" "}
+                    {tr("gender", currentLang)}:{" "}
                     <span className="font-bold text-foreground capitalize">
-                      {activeRequest.profileSnapshot?.gender}
+                      {currentLang === "hi" && activeRequest.profileSnapshot?.gender === "male"
+                        ? "पुरुष"
+                        : currentLang === "hi" && activeRequest.profileSnapshot?.gender === "female"
+                          ? "महिला"
+                          : currentLang === "gu" && activeRequest.profileSnapshot?.gender === "male"
+                            ? "પુરુષ"
+                            : currentLang === "gu" &&
+                                activeRequest.profileSnapshot?.gender === "female"
+                              ? "સ્ત્રી"
+                              : activeRequest.profileSnapshot?.gender}
                     </span>
                   </div>
                   <div>
-                    BMI:{" "}
+                    {tr("bmi", currentLang)}:{" "}
                     <span className="font-bold text-foreground">
                       {activeRequest.profileSnapshot?.bmi?.toFixed(1)}
                     </span>
                   </div>
                   <div>
-                    Weight:{" "}
+                    {tr("weight", currentLang)}:{" "}
                     <span className="font-bold text-foreground">
-                      {activeRequest.profileSnapshot?.weight} kg
+                      {activeRequest.profileSnapshot?.weight}
                     </span>
                   </div>
                 </div>
 
                 <div className="space-y-1.5 border-t border-border/40 pt-3">
                   <p className="font-bold text-[10px] uppercase text-muted-foreground tracking-wider">
-                    Lifestyle:
+                    {tr("lifestyleLabel", currentLang)}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     <Badge variant="outline" className="text-[10px] py-0">
-                      {activeRequest.profileSnapshot?.lifestyle?.smoking} smoking
+                      {tr(
+                        activeRequest.profileSnapshot?.lifestyle?.smoking || "never",
+                        currentLang,
+                      )}{" "}
+                      {tr("smoking", currentLang).toLowerCase()}
                     </Badge>
                     <Badge variant="outline" className="text-[10px] py-0">
-                      {activeRequest.profileSnapshot?.lifestyle?.exercise} exercise
+                      {tr(
+                        activeRequest.profileSnapshot?.lifestyle?.exercise || "none",
+                        currentLang,
+                      )}{" "}
+                      {tr("exercise", currentLang).toLowerCase()}
                     </Badge>
                   </div>
                 </div>
@@ -631,7 +668,7 @@ function ExpertReviewPage() {
                 {activeRequest.profileSnapshot?.symptoms && (
                   <div className="space-y-1 border-t border-border/40 pt-3">
                     <p className="font-bold text-[10px] uppercase text-muted-foreground tracking-wider">
-                      Symptoms:
+                      {tr("symptomsLabel", currentLang)}
                     </p>
                     <p className="text-muted-foreground italic text-[11px] truncate">
                       {activeRequest.profileSnapshot.symptoms}
@@ -649,18 +686,18 @@ function ExpertReviewPage() {
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-500 mb-4 animate-pulse">
                   <Clock className="h-6 w-6" />
                 </div>
-                <h3 className="font-display text-lg font-bold">Review Request Pending</h3>
+                <h3 className="font-display text-lg font-bold">
+                  {tr("reviewRequestPending", currentLang)}
+                </h3>
                 <p className="text-xs text-muted-foreground mt-2 max-w-sm leading-relaxed">
-                  An expert practitioner will review your clinical risk drivers, action plans, and
-                  health charts shortly. Chat will unlock automatically as soon as they accept.
+                  {tr("reviewPendingDesc", currentLang)}
                 </p>
                 <div className="mt-6 border-t border-border/50 pt-6 max-w-sm text-left">
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Note:
+                    {tr("noteLabel", currentLang)}
                   </p>
                   <p className="text-[10px] text-muted-foreground leading-normal mt-1">
-                    Your assessment results are securely locked in the state. Once assigned, you can
-                    message the physician or nutritionist directly below.
+                    {tr("reviewPendingNote", currentLang)}
                   </p>
                 </div>
               </Card>
@@ -673,16 +710,18 @@ function ExpertReviewPage() {
                     <div className="h-2 w-2 rounded-full animate-ping bg-teal shrink-0" />
                     <div>
                       <CardTitle className="text-sm font-bold flex items-center gap-1.5">
-                        Clinical Chat Room
+                        {tr("clinicalChatRoom", currentLang)}
                       </CardTitle>
                       <CardDescription className="text-[10px] text-muted-foreground">
-                        {isCompleted ? "Archived (Read-Only)" : "Chat active with medical advisor"}
+                        {isCompleted
+                          ? tr("archivedReadOnly", currentLang)
+                          : tr("chatActiveWithAdvisor", currentLang)}
                       </CardDescription>
                     </div>
                   </div>
                   {isCompleted && (
                     <Badge className="bg-blue-500/15 text-blue-400 border border-blue-500/20 font-bold text-[10px] rounded-full">
-                      Archived
+                      {tr("archived", currentLang)}
                     </Badge>
                   )}
                 </CardHeader>
@@ -692,10 +731,11 @@ function ExpertReviewPage() {
                   {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center text-xs text-muted-foreground p-6">
                       <MessageSquare className="h-8 w-8 text-teal/40 mb-2" />
-                      <p className="font-semibold text-foreground">Welcome to the Expert Chat</p>
+                      <p className="font-semibold text-foreground">
+                        {tr("welcomeExpertChat", currentLang)}
+                      </p>
                       <p className="max-w-xs mt-1 text-[11px]">
-                        The expert has accepted your request. Send a message to start receiving
-                        guidance.
+                        {tr("welcomeExpertChatDesc", currentLang)}
                       </p>
                     </div>
                   ) : (
@@ -747,8 +787,8 @@ function ExpertReviewPage() {
                       onChange={(e) => setNewMessageText(e.target.value)}
                       placeholder={
                         isCompleted
-                          ? "This review has been marked as completed."
-                          : "Type clinical note or message to expert..."
+                          ? tr("chatCompletedPlaceholder", currentLang)
+                          : tr("chatInputPlaceholder", currentLang)
                       }
                       disabled={isCompleted || sendingMsg}
                       rows={1}

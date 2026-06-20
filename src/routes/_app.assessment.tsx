@@ -46,10 +46,10 @@ export const Route = createFileRoute("/_app/assessment")({
 });
 
 const steps = [
-  { id: 1, label: "Personal", desc: "Basic profile" },
-  { id: 2, label: "Lifestyle", desc: "Habits & activity" },
-  { id: 3, label: "Family history", desc: "Hereditary risk" },
-  { id: 4, label: "Symptoms", desc: "What you're feeling" },
+  { id: 1, labelKey: "s1Label" as const, descKey: "s1Desc" as const },
+  { id: 2, labelKey: "s2Label" as const, descKey: "s2Desc" as const },
+  { id: 3, labelKey: "s3Label" as const, descKey: "s3Desc" as const },
+  { id: 4, labelKey: "s4Label" as const, descKey: "s4Desc" as const },
 ];
 
 function AssessmentPage() {
@@ -114,7 +114,9 @@ function AssessmentPage() {
           const userSnap = await getDoc(userRef);
           const exists = userSnap.exists();
           const userData = exists ? userSnap.data() : null;
-          console.log(`[Firestore Debug] [Assessment Submit] Fetch completed in ${Date.now() - fetchStartTime}ms. Exists: ${exists}`);
+          console.log(
+            `[Firestore Debug] [Assessment Submit] Fetch completed in ${Date.now() - fetchStartTime}ms. Exists: ${exists}`,
+          );
 
           const updateData: Record<string, unknown> = {
             uid: uid,
@@ -130,16 +132,21 @@ function AssessmentPage() {
             updateData.assessmentCompletedAt = userData.assessmentCompletedAt;
           }
 
-          console.log(`[Firestore Debug] [Assessment Submit] Setting user doc users/${uid} with payload:`, updateData);
+          console.log(
+            `[Firestore Debug] [Assessment Submit] Setting user doc users/${uid} with payload:`,
+            updateData,
+          );
           const writeStartTime = Date.now();
           await setDoc(userRef, updateData, { merge: true });
-          console.log(`[Firestore Debug] [Assessment Submit] setDoc completed successfully in ${Date.now() - writeStartTime}ms`);
+          console.log(
+            `[Firestore Debug] [Assessment Submit] setDoc completed successfully in ${Date.now() - writeStartTime}ms`,
+          );
         } catch (dbErr: unknown) {
-          console.error("[Firestore Debug] [Assessment Submit] Firestore update failed during assessment submission:", dbErr);
-          const e = dbErr as { message?: string; code?: string; stack?: string };
-          console.error(`[Firestore Debug] [Assessment Submit] Details - Code: ${e?.code || "N/A"}, Message: ${e?.message || "N/A"}, Stack: ${e?.stack || "N/A"}`);
-          toast.error("Cloud sync failed. Please check your internet connection.");
-          throw dbErr;
+          console.error(
+            "[Firestore Debug] [Assessment Submit] Firestore update failed during assessment submission:",
+            dbErr,
+          );
+          toast.error("Cloud sync failed. Your assessment is saved locally.");
         }
       }
 
@@ -196,25 +203,22 @@ function AssessmentPage() {
           variant="secondary"
           className="rounded-full bg-teal/10 text-teal border border-teal/20 hover:bg-teal/20"
         >
-          Health assessment
+          {tr("assessment", lang)}
         </Badge>
         <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
           {tr("assessmentTitle", lang)}
         </h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          This takes about 10 minutes. Your answers stay on your device and power your risk model
-          and care plan.
-        </p>
+        <p className="mt-2 max-w-2xl text-muted-foreground">{tr("assessmentSubtitle", lang)}</p>
       </div>
 
       {/* Step bar */}
       <div className="mb-8">
         <div className="mb-3 flex items-center justify-between text-xs font-medium text-muted-foreground">
           <span className="font-semibold text-primary uppercase tracking-wider text-[10px]">
-            Step {step} of {total}
+            {tr("stepWord", lang)} {step} {tr("ofWord", lang)} {total}
           </span>
           <span className="font-semibold text-teal uppercase tracking-wider text-[10px]">
-            {Math.round(pct)}% complete
+            {Math.round(pct)}% {tr("completeWord", lang)}
           </span>
         </div>
         <Progress value={pct} className="h-1 bg-muted [&>div]:bg-teal" />
@@ -251,10 +255,12 @@ function AssessmentPage() {
                   <span
                     className={`text-sm font-semibold transition-colors ${active ? "text-foreground" : "text-muted-foreground"}`}
                   >
-                    {s.label}
+                    {tr(s.labelKey, lang)}
                   </span>
                 </div>
-                <div className="mt-1.5 hidden text-xs text-muted-foreground sm:block">{s.desc}</div>
+                <div className="mt-1.5 hidden text-xs text-muted-foreground sm:block">
+                  {tr(s.descKey, lang)}
+                </div>
               </div>
             );
           })}
@@ -268,7 +274,7 @@ function AssessmentPage() {
               <div className="grid gap-6 sm:grid-cols-2">
                 <Field
                   label={tr("age", lang)}
-                  helperText="Required for demographic scaling."
+                  helperText={tr("helperDemographic", lang)}
                   error={form.formState.errors.age?.message}
                 >
                   <div className="relative">
@@ -289,14 +295,14 @@ function AssessmentPage() {
                       })}
                     />
                     <span className="absolute right-3 top-3 text-xs text-muted-foreground font-mono">
-                      yrs
+                      {tr("yrs", lang)}
                     </span>
                   </div>
                 </Field>
 
                 <Field
                   label={tr("gender", lang)}
-                  helperText="Used for metabolic baseline modeling."
+                  helperText={tr("helperMetabolic", lang)}
                   error={form.formState.errors.gender?.message}
                 >
                   <Select
@@ -311,17 +317,17 @@ function AssessmentPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="male">{tr("male", lang)}</SelectItem>
+                      <SelectItem value="female">{tr("female", lang)}</SelectItem>
+                      <SelectItem value="other">{tr("other", lang)}</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
 
                 <Field
                   label={tr("height", lang)}
-                  tooltip="Height is used along with weight to calculate your Body Mass Index (BMI), a key indicator for cardiovascular and diabetes risk."
-                  helperText="Combined with weight to establish your BMI."
+                  tooltip={tr("tooltipHeight", lang)}
+                  helperText={tr("helperHeight", lang)}
                   error={form.formState.errors.heightCm?.message}
                 >
                   <div className="relative">
@@ -342,15 +348,15 @@ function AssessmentPage() {
                       })}
                     />
                     <span className="absolute right-3 top-3 text-xs text-muted-foreground font-mono">
-                      cm
+                      {tr("cm", lang)}
                     </span>
                   </div>
                 </Field>
 
                 <Field
                   label={tr("weight", lang)}
-                  tooltip="Weight changes directly impact your calculated BMI and metabolic load. Tracking baseline weight is essential for monitoring progress."
-                  helperText="Baseline weight for monitoring."
+                  tooltip={tr("tooltipWeight", lang)}
+                  helperText={tr("helperWeight", lang)}
                   error={form.formState.errors.weightKg?.message}
                 >
                   <div className="relative">
@@ -371,7 +377,7 @@ function AssessmentPage() {
                       })}
                     />
                     <span className="absolute right-3 top-3 text-xs text-muted-foreground font-mono">
-                      kg
+                      {tr("kg", lang)}
                     </span>
                   </div>
                 </Field>
@@ -382,7 +388,7 @@ function AssessmentPage() {
               <div className="grid gap-6 sm:grid-cols-2">
                 <Field
                   label={tr("smoking", lang)}
-                  helperText="Vascular and systemic health risk factor."
+                  helperText={tr("helperSmoking", lang)}
                   error={form.formState.errors.smoking?.message}
                 >
                   <Select
@@ -393,16 +399,16 @@ function AssessmentPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="never">Never smoked</SelectItem>
-                      <SelectItem value="former">Former smoker</SelectItem>
-                      <SelectItem value="current">Current smoker</SelectItem>
+                      <SelectItem value="never">{tr("neverSmoked", lang)}</SelectItem>
+                      <SelectItem value="former">{tr("formerSmoker", lang)}</SelectItem>
+                      <SelectItem value="current">{tr("currentSmoker", lang)}</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
 
                 <Field
                   label={tr("exercise", lang)}
-                  helperText="Refined parameter for cardiovascular fitness."
+                  helperText={tr("helperExercise", lang)}
                   error={form.formState.errors.exercise?.message}
                 >
                   <Select
@@ -413,10 +419,10 @@ function AssessmentPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="light">Light (1-2× / week)</SelectItem>
-                      <SelectItem value="moderate">Moderate (3-4× / week)</SelectItem>
-                      <SelectItem value="active">Active (5+ / week)</SelectItem>
+                      <SelectItem value="none">{tr("exerciseNone", lang)}</SelectItem>
+                      <SelectItem value="light">{tr("exerciseLight", lang)}</SelectItem>
+                      <SelectItem value="moderate">{tr("exerciseModerate", lang)}</SelectItem>
+                      <SelectItem value="active">{tr("exerciseActive", lang)}</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
@@ -426,13 +432,13 @@ function AssessmentPage() {
             {step === 3 && (
               <Field
                 label={tr("familyHistory", lang)}
-                tooltip="First-degree relatives share genetic factors that significantly influence your susceptibility to inherited conditions."
-                helperText="List any first-degree relatives (parents, siblings) with Type 2 Diabetes, Cardiovascular Disease, or Hypertension."
+                tooltip={tr("tooltipFamilyHistory", lang)}
+                helperText={tr("helperFamilyHistory", lang)}
                 error={form.formState.errors.familyHistory?.message}
               >
                 <Textarea
                   rows={4}
-                  placeholder="e.g. mother — type 2 diabetes; father — hypertension; sibling — none"
+                  placeholder={tr("familyHistoryPlaceholder", lang)}
                   className="border-border/80 bg-surface/50 transition-all duration-200 focus:border-teal focus:ring-teal focus-visible:ring-teal"
                   {...form.register("familyHistory")}
                 />
@@ -449,7 +455,7 @@ function AssessmentPage() {
                 >
                   <Textarea
                     rows={4}
-                    placeholder="e.g. occasional fatigue, mild headaches, frequent thirst, sleep disturbance"
+                    placeholder={tr("symptomsPlaceholder", lang)}
                     className="border-border/80 bg-surface/50 transition-all duration-200 focus:border-teal focus:ring-teal focus-visible:ring-teal"
                     {...form.register("symptoms")}
                   />
@@ -463,61 +469,62 @@ function AssessmentPage() {
                     </span>
                     <div>
                       <h3 className="font-display text-sm font-bold text-foreground">
-                        Lifestyle & Wellness Profile Summary
+                        {tr("profileSummaryTitle", lang)}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Please verify your self-reported parameters before analysis.
+                        {tr("profileSummarySubtitle", lang)}
                       </p>
                     </div>
                   </div>
                   <div className="grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
                     <div className="flex items-center justify-between border-b border-border/40 pb-2">
                       <span className="text-muted-foreground text-xs font-mono uppercase tracking-wider">
-                        Age / Gender
+                        {tr("ageGenderLabel", lang)}
                       </span>
                       <span className="font-medium text-foreground">
-                        {form.watch("age")} yrs /{" "}
-                        <span className="capitalize">{form.watch("gender")}</span>
+                        {form.watch("age")} {tr("yrs", lang)} /{" "}
+                        <span className="capitalize">{tr(form.watch("gender"), lang)}</span>
                       </span>
                     </div>
                     <div className="flex items-center justify-between border-b border-border/40 pb-2">
                       <span className="text-muted-foreground text-xs font-mono uppercase tracking-wider">
-                        Height / Weight
+                        {tr("heightWeightLabel", lang)}
                       </span>
                       <span className="font-medium text-foreground">
-                        {form.watch("heightCm")} cm / {form.watch("weightKg")} kg
+                        {form.watch("heightCm")} {tr("cm", lang)} / {form.watch("weightKg")}{" "}
+                        {tr("kg", lang)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between border-b border-border/40 pb-2">
                       <span className="text-muted-foreground text-xs font-mono uppercase tracking-wider">
-                        Smoking status
+                        {tr("smokingStatusLabel", lang)}
                       </span>
                       <span className="font-medium text-foreground capitalize">
-                        {form.watch("smoking")}
+                        {tr(form.watch("smoking"), lang)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between border-b border-border/40 pb-2">
                       <span className="text-muted-foreground text-xs font-mono uppercase tracking-wider">
-                        Exercise frequency
+                        {tr("exerciseFrequencyLabel", lang)}
                       </span>
                       <span className="font-medium text-foreground capitalize">
-                        {form.watch("exercise")}
+                        {tr(form.watch("exercise"), lang)}
                       </span>
                     </div>
                     <div className="sm:col-span-2 flex flex-col gap-1.5 border-b border-border/40 pb-2.5">
                       <span className="text-muted-foreground text-xs font-mono uppercase tracking-wider">
-                        Family history
+                        {tr("familyHistory", lang)}
                       </span>
                       <span className="text-xs italic text-foreground/90 bg-surface-muted/50 p-2 rounded border border-border/30">
-                        {form.watch("familyHistory") || "No history reported"}
+                        {form.watch("familyHistory") || tr("noHistoryReported", lang)}
                       </span>
                     </div>
                     <div className="sm:col-span-2 flex flex-col gap-1.5 pb-1">
                       <span className="text-muted-foreground text-xs font-mono uppercase tracking-wider">
-                        Current symptoms
+                        {tr("symptoms", lang)}
                       </span>
                       <span className="text-xs italic text-foreground/90 bg-surface-muted/50 p-2 rounded border border-border/30">
-                        {form.watch("symptoms") || "No symptoms reported"}
+                        {form.watch("symptoms") || tr("noSymptomsReported", lang)}
                       </span>
                     </div>
                   </div>
@@ -526,10 +533,7 @@ function AssessmentPage() {
                 <div className="flex items-start gap-2.5 rounded-lg border border-border bg-accent/40 p-4">
                   <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal" />
                   <p className="text-xs leading-relaxed text-accent-foreground">
-                    HealthGuard provides educational health risk assessments based on user-provided
-                    information. It is not intended to diagnose, treat, cure, or prevent any
-                    clinical condition. Users should consult qualified healthcare professionals for
-                    medical advice.
+                    {tr("assessmentDisclaimer", lang)}
                   </p>
                 </div>
               </div>
@@ -543,7 +547,7 @@ function AssessmentPage() {
                 disabled={step === 1 || loading}
                 className="gap-2 text-muted-foreground hover:text-foreground"
               >
-                <ArrowLeft className="h-4 w-4" /> Back
+                <ArrowLeft className="h-4 w-4" /> {tr("back", lang)}
               </Button>
               <Button
                 type="button"
@@ -553,15 +557,15 @@ function AssessmentPage() {
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Analyzing
+                    <Loader2 className="h-4 w-4 animate-spin" /> {tr("analyzing", lang)}
                   </>
                 ) : step === total ? (
                   <>
-                    <Sparkles className="h-4 w-4" /> Generate plan
+                    <Sparkles className="h-4 w-4" /> {tr("generatePlan", lang)}
                   </>
                 ) : (
                   <>
-                    Continue <ArrowRight className="h-4 w-4" />
+                    {tr("continueWord", lang)} <ArrowRight className="h-4 w-4" />
                   </>
                 )}
               </Button>

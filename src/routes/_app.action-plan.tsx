@@ -222,6 +222,14 @@ function MetricCard({
   );
 }
 
+function getFocusTranslation(focus: string, currentLang: string) {
+  const norm = focus.toLowerCase();
+  if (norm === "vo2 intervals") return tr("fit_vo2", currentLang);
+  if (norm === "long endurance") return tr("fit_endurance", currentLang);
+  const key = `fit_${norm.replace(" / ", "_").replace(" ", "_")}`;
+  return tr(key, currentLang);
+}
+
 function ActionPlanPage() {
   const navigate = useNavigate();
   const [profile] = useProfile();
@@ -230,8 +238,8 @@ function ActionPlanPage() {
   const currentLang = useLanguage();
 
   useEffect(() => {
-    document.title = "Action Plan — HealthGuard";
-  }, []);
+    document.title = `${tr("actionPlan", currentLang)} — HealthGuard`;
+  }, [currentLang]);
 
   if (!profile || !result) {
     return (
@@ -240,17 +248,16 @@ function ActionPlanPage() {
           <Activity className="h-7 w-7" />
         </div>
         <h1 className="mt-6 font-display text-3xl font-bold tracking-tight text-foreground">
-          Assessment Required
+          {tr("assessmentRequired", currentLang)}
         </h1>
         <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-md">
-          Please complete your initial health assessment before viewing your personalized Action
-          Plan.
+          {tr("actionPlanAssessDesc", currentLang)}
         </p>
         <Button
           onClick={() => navigate({ to: "/assessment" })}
           className="mt-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold px-6 py-2 h-11"
         >
-          <span>Start Assessment</span>
+          <span>{tr("startAssessment", currentLang)}</span>
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
@@ -262,6 +269,8 @@ function ActionPlanPage() {
   if (profile.exercise === "active") recFitness = "advanced";
   else if (profile.exercise === "moderate") recFitness = "intermediate";
 
+  const weekdays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 lg:py-14 space-y-10">
       {/* Header */}
@@ -270,14 +279,13 @@ function ActionPlanPage() {
           variant="secondary"
           className="rounded-full bg-teal/10 text-teal border border-teal/20"
         >
-          Active Plan
+          {tr("activePlan", currentLang)}
         </Badge>
         <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
           {tr("actionPlan", currentLang)}
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-relaxed">
-          Your personalized list of highest impact habits, custom regional diet guides, and physical
-          exercise workouts for this week.
+          {tr("actionPlanDesc", currentLang)}
         </p>
       </div>
 
@@ -286,7 +294,8 @@ function ActionPlanPage() {
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal via-primary to-accent" />
         <CardHeader className="pb-3">
           <CardTitle className="font-display text-base font-bold text-foreground flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-teal animate-pulse" /> This Week's Top Actions
+            <Sparkles className="h-4 w-4 text-teal animate-pulse" />{" "}
+            {tr("thisWeeksTopActions", currentLang)}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-2">
@@ -303,7 +312,10 @@ function ActionPlanPage() {
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-foreground leading-snug">{p.action}</p>
                     <p className="text-[10px] text-teal mt-1 font-semibold uppercase tracking-wider font-mono">
-                      Benefit: ↓ {Math.abs(p.estimatedImpact)} pts risk drop
+                      {tr("benefitRiskDrop", currentLang).replace(
+                        "{impact}",
+                        Math.abs(p.estimatedImpact).toString(),
+                      )}
                     </p>
                   </div>
                 </div>
@@ -314,18 +326,20 @@ function ActionPlanPage() {
               <div className="flex items-start gap-3.5 rounded-xl border border-border bg-surface-muted/50 p-4">
                 <span className="font-display text-lg font-black text-teal shrink-0">1</span>
                 <p className="text-sm font-bold text-foreground">
-                  Exercise 30 minutes/day (moderate intensity)
+                  {tr("fallbackAction1", currentLang)}
                 </p>
               </div>
               <div className="flex items-start gap-3.5 rounded-xl border border-border bg-surface-muted/50 p-4">
                 <span className="font-display text-lg font-black text-teal shrink-0">2</span>
                 <p className="text-sm font-bold text-foreground">
-                  Add high-fiber and protein foods to breakfast
+                  {tr("fallbackAction2", currentLang)}
                 </p>
               </div>
               <div className="flex items-start gap-3.5 rounded-xl border border-border bg-surface-muted/50 p-4">
                 <span className="font-display text-lg font-black text-teal shrink-0">3</span>
-                <p className="text-sm font-bold text-foreground">Sleep 7–8 hours nightly</p>
+                <p className="text-sm font-bold text-foreground">
+                  {tr("fallbackAction3", currentLang)}
+                </p>
               </div>
             </div>
           )}
@@ -340,17 +354,16 @@ function ActionPlanPage() {
               {tr("dietPlan", currentLang)}
             </Badge>
             <h3 className="mt-2 font-display text-2xl font-bold tracking-tight">
-              Weekly Meal Planner
+              {tr("weeklyMealPlanner", currentLang)}
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Regionally-adapted meals designed to optimize your BMI ({result.bmi.toFixed(1)}) and
-              glycemic/cardiovascular metrics.
+              {tr("mealPlannerDesc", currentLang).replace("{bmi}", result.bmi.toFixed(1))}
             </p>
           </div>
           <div className="flex rounded-lg border border-border bg-surface p-1">
             {[
-              { v: "indian-veg" as const, label: "Vegetarian" },
-              { v: "indian-nonveg" as const, label: "Non-vegetarian" },
+              { v: "indian-veg" as const, label: tr("dietVegetarian", currentLang) },
+              { v: "indian-nonveg" as const, label: tr("dietNonVegetarian", currentLang) },
             ].map((o) => (
               <button
                 key={o.v}
@@ -378,24 +391,28 @@ function ActionPlanPage() {
                   className="gap-2 cursor-pointer text-xs font-semibold"
                 >
                   <M.icon className="h-3.5 w-3.5" />
-                  <span>{M.label}</span>
+                  <span>{tr(k, currentLang)}</span>
                 </TabsTrigger>
               );
             })}
           </TabsList>
           {(Object.keys(meals) as Array<keyof typeof meals>).map((k) => {
             const M = meals[k];
-            const list = dietSamples[dietPref][k];
+            const list = Array.from({ length: 7 }, (_, i) => {
+              const key = `diet_${dietPref === "indian-veg" ? "veg" : "nonveg"}_${k}_${i}`;
+              return tr(key, currentLang);
+            });
             return (
               <TabsContent key={k} value={k} className="mt-4">
                 <Card className="border-border bg-surface shadow-card-soft">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2 font-display text-sm font-bold text-foreground">
-                        <M.icon className="h-4 w-4 text-teal" /> {M.label} Suggestions
+                        <M.icon className="h-4 w-4 text-teal" /> {tr(k, currentLang)}{" "}
+                        {tr("suggestions", currentLang)}
                       </CardTitle>
                       <span className="text-xs text-muted-foreground font-semibold">
-                        ~{M.kcal} kcal
+                        {tr("kcalVal", currentLang).replace("{kcal}", M.kcal)}
                       </span>
                     </div>
                   </CardHeader>
@@ -406,7 +423,7 @@ function ActionPlanPage() {
                         className="rounded-xl border border-border bg-surface-muted/65 p-3.5"
                       >
                         <div className="text-[10px] font-bold uppercase tracking-wider text-teal font-mono">
-                          {week[i]}
+                          {tr(weekdays[i], currentLang)}
                         </div>
                         <div className="mt-1 text-xs font-semibold leading-relaxed text-foreground">
                           {dish}
@@ -428,64 +445,107 @@ function ActionPlanPage() {
             {tr("exercisePlan", currentLang)}
           </Badge>
           <h3 className="mt-2 font-display text-2xl font-bold tracking-tight">
-            Weekly Workout Plan
+            {tr("weeklyWorkoutPlan", currentLang)}
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
-            Activity goals tailored for your reported baseline activity profile:{" "}
-            <span className="font-semibold capitalize text-foreground">{recFitness}</span>.
+            {tr("workoutPlanDesc", currentLang).replace(
+              "{level}",
+              tr(
+                `fit_${recFitness === "beginner" ? "beg" : recFitness === "intermediate" ? "int" : "adv"}_title`,
+                currentLang,
+              ),
+            )}
           </p>
         </div>
 
         <Tabs defaultValue={recFitness} className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-3 bg-muted p-1">
             <TabsTrigger value="beginner" className="cursor-pointer text-xs font-semibold">
-              Beginner
+              {tr("fit_beg_title", currentLang)}
             </TabsTrigger>
             <TabsTrigger value="intermediate" className="cursor-pointer text-xs font-semibold">
-              Intermediate
+              {tr("fit_int_title", currentLang)}
             </TabsTrigger>
             <TabsTrigger value="advanced" className="cursor-pointer text-xs font-semibold">
-              Advanced
+              {tr("fit_adv_title", currentLang)}
             </TabsTrigger>
           </TabsList>
 
           {(Object.keys(fitnessPlans) as FitnessLevel[]).map((level) => {
             const p = fitnessPlans[level];
+            const weeklyVal = tr(
+              `fit_${level === "beginner" ? "beg" : level === "intermediate" ? "int" : "adv"}_weekly`,
+              currentLang,
+            );
+            const intensityVal = tr(
+              `fit_${level === "beginner" ? "beg" : level === "intermediate" ? "int" : "adv"}_intensity`,
+              currentLang,
+            );
             return (
               <TabsContent key={level} value={level} className="mt-4 space-y-4">
                 <div className="grid gap-3 grid-cols-3">
-                  <MetricCard icon={Timer} label="Weekly volume" value={p.weekly} />
-                  <MetricCard icon={Flame} label="Estimated burn" value={`${p.kcal} kcal / wk`} />
-                  <MetricCard icon={Dumbbell} label="Intensity" value={p.intensity} />
+                  <MetricCard
+                    icon={Timer}
+                    label={tr("weeklyVolume", currentLang)}
+                    value={weeklyVal}
+                  />
+                  <MetricCard
+                    icon={Flame}
+                    label={tr("estimatedBurn", currentLang)}
+                    value={tr("kcalPerWk", currentLang).replace("{kcal}", p.kcal.toString())}
+                  />
+                  <MetricCard
+                    icon={Dumbbell}
+                    label={tr("intensity", currentLang)}
+                    value={intensityVal}
+                  />
                 </div>
 
                 <Card className="border-border shadow-card-soft">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <CardTitle className="font-display text-sm font-bold text-foreground">
-                      Daily Activity Guide — {p.title}
+                      {tr("dailyActivityGuide", currentLang).replace(
+                        "{title}",
+                        tr(
+                          `fit_${level === "beginner" ? "beg" : level === "intermediate" ? "int" : "adv"}_title`,
+                          currentLang,
+                        ),
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
-                      {p.sessions.map((s) => (
-                        <div
-                          key={s.day}
-                          className="rounded-xl border border-border bg-surface p-3.5 flex flex-col justify-between"
-                        >
-                          <div className="flex items-center justify-between border-b border-border/40 pb-1.5 mb-1.5">
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-teal font-mono">
-                              {s.day}
+                      {p.sessions.map((s, i) => {
+                        const dayText = tr(weekdays[i], currentLang);
+                        const minText = tr("minVal", currentLang).replace(
+                          "{min}",
+                          s.min.toString(),
+                        );
+                        const focusText = getFocusTranslation(s.focus, currentLang);
+                        const detailText = tr(
+                          `fit_${level === "beginner" ? "beg" : level === "intermediate" ? "int" : "adv"}_detail_${i}`,
+                          currentLang,
+                        );
+                        return (
+                          <div
+                            key={s.day}
+                            className="rounded-xl border border-border bg-surface p-3.5 flex flex-col justify-between"
+                          >
+                            <div className="flex items-center justify-between border-b border-border/40 pb-1.5 mb-1.5">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-teal font-mono">
+                                {dayText}
+                              </div>
+                              <div className="text-[10px] font-bold text-muted-foreground">
+                                {minText}
+                              </div>
                             </div>
-                            <div className="text-[10px] font-bold text-muted-foreground">
-                              {s.min} min
+                            <div className="text-xs font-bold text-foreground">{focusText}</div>
+                            <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground font-medium">
+                              {detailText}
                             </div>
                           </div>
-                          <div className="text-xs font-bold text-foreground">{s.focus}</div>
-                          <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground font-medium">
-                            {s.detail}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>

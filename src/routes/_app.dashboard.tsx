@@ -489,18 +489,18 @@ function Dashboard() {
                 <span className="grid h-5 w-5 place-items-center rounded-full bg-teal/20 text-teal text-[10px] font-bold">
                   ✓
                 </span>
-                <span>Assessment Complete</span>
+                <span>{tr("assessmentComplete", currentLang)}</span>
               </div>
               <div className="flex items-center gap-2 text-teal font-medium">
                 <span className="grid h-5 w-5 place-items-center rounded-full bg-teal/20 text-teal text-[10px] font-bold">
                   ✓
                 </span>
-                <span>Risk Profile Generated</span>
+                <span>{tr("riskProfileGenerated", currentLang)}</span>
               </div>
               <div className="mt-2 p-3.5 rounded-xl border border-border bg-surface-muted/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider font-mono">
-                    Next Recommended Step:
+                    {tr("nextRecommendedStep", currentLang)}
                   </span>
                   <h4 className="font-bold text-foreground text-sm">{nextStepTitle}</h4>
                   <p className="text-[11px] text-muted-foreground leading-normal">{nextStepDesc}</p>
@@ -521,20 +521,20 @@ function Dashboard() {
         <Card className="border-border bg-surface shadow-card-soft h-full flex flex-col justify-between">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-              Assessment Validity
+              {tr("assessmentValidity", currentLang)}
             </CardTitle>
           </CardHeader>
           <CardContent className="py-4 flex-1 flex flex-col justify-center text-center space-y-2">
             <div>
-              <p className="text-xs text-muted-foreground">Profile Age</p>
+              <p className="text-xs text-muted-foreground">{tr("profileAge", currentLang)}</p>
               <h3 className="font-display text-3xl font-black text-foreground mt-1">
                 {profileAgeDays === 0
-                  ? "Today"
-                  : `${profileAgeDays} ${profileAgeDays === 1 ? "day" : "days"} old`}
+                  ? tr("today", currentLang)
+                  : `${profileAgeDays} ${profileAgeDays === 1 ? tr("day", currentLang) : tr("days", currentLang)} ${tr("old", currentLang)}`}
               </h3>
             </div>
             <div className="text-[10px] text-muted-foreground border-t border-border/40 pt-2.5 mt-2">
-              Completed: {formatDate(lastUpdateDateStr)}
+              {tr("completedColon", currentLang)} {formatDate(lastUpdateDateStr)}
             </div>
           </CardContent>
           <CardFooter className="pt-0 pb-4 justify-center bg-surface-muted/10 border-t border-border/30 rounded-b-xl py-3">
@@ -543,7 +543,7 @@ function Dashboard() {
               variant="ghost"
               className="text-xs font-bold text-teal hover:bg-teal/5 h-8"
             >
-              <Link to="/assessment">Update Assessment</Link>
+              <Link to="/assessment">{tr("updateAssessment", currentLang)}</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -561,20 +561,20 @@ function Dashboard() {
               </div>
               <div className="min-w-0">
                 <h3 className="font-display text-sm font-bold text-foreground">
-                  Health Coach Check-In
+                  {tr("healthCoachCheckIn", currentLang)}
                 </h3>
                 {nudgeLoading ? (
                   <div className="h-4 w-32 bg-muted/40 animate-pulse rounded-lg mt-1" />
                 ) : (
                   <div className="space-y-1.5 mt-1.5">
                     <p className="text-sm font-semibold text-foreground">
-                      Current focus:{" "}
+                      {tr("currentFocus", currentLang)}{" "}
                       <span className="font-normal text-muted-foreground">
                         {coachNudge?.insight || "Reduce sedentary lifestyle."}
                       </span>
                     </p>
                     <p className="text-sm font-semibold text-foreground">
-                      Next action:{" "}
+                      {tr("nextAction", currentLang)}{" "}
                       <span className="font-normal text-muted-foreground">
                         {coachNudge?.nextAction || "Take a 15-minute walk tomorrow morning."}
                       </span>
@@ -587,7 +587,7 @@ function Dashboard() {
               asChild
               className="bg-teal text-white hover:bg-teal/90 font-bold text-xs h-9 cursor-pointer self-stretch md:self-auto rounded-lg shrink-0"
             >
-              <Link to="/action-plan">Go to Action Plan</Link>
+              <Link to="/action-plan">{tr("goToActionPlan", currentLang)}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -611,7 +611,7 @@ function Dashboard() {
                         </button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-[220px] p-2 bg-popover text-popover-foreground text-xs rounded border border-border shadow-md">
-                        Calculated using FINDRISC and cardiovascular risk scoring models.
+                        {tr("calculatedUsingModels", currentLang)}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -636,13 +636,21 @@ function Dashboard() {
                     className="h-1.5 w-1.5 rounded-full animate-pulse"
                     style={{ backgroundColor: overallColor }}
                   />
-                  {result.overallRisk} Risk
+                  {tr(
+                    result.overallRisk === "Low"
+                      ? "low"
+                      : result.overallRisk === "Moderate"
+                        ? "moderateRisk"
+                        : "high",
+                    currentLang,
+                  )}{" "}
+                  {tr("riskText", currentLang)}
                 </div>
               </div>
 
               <div className="mt-6 border-t border-border/40 pt-4 space-y-3">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
-                  Condition Risks Breakdown
+                  {tr("conditionRisksBreakdown", currentLang)}
                 </div>
                 {[
                   { name: "Diabetes", value: result.risk.diabetes },
@@ -653,7 +661,13 @@ function Dashboard() {
                   return (
                     <div key={r.name} className="space-y-1">
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-muted-foreground">{r.name}</span>
+                        <span className="text-muted-foreground">
+                          {r.name === "Diabetes"
+                            ? tr("diabetes", currentLang)
+                            : r.name === "Heart Disease"
+                              ? tr("heartDisease", currentLang)
+                              : tr("hypertension", currentLang)}
+                        </span>
                         <span style={{ color: c }}>{r.value}%</span>
                       </div>
                       <div className="h-1.5 w-full bg-muted/60 rounded-full overflow-hidden">
@@ -707,9 +721,7 @@ function Dashboard() {
               ) : (
                 <div className="flex flex-col items-center justify-center py-6 text-center text-xs text-muted-foreground">
                   <Brain className="h-8 w-8 text-teal/40 mb-2" />
-                  <span>
-                    No active risk drivers identified. Your health profile looks excellent!
-                  </span>
+                  <span>{tr("noRiskDrivers", currentLang)}</span>
                 </div>
               )}
             </CardContent>
@@ -776,20 +788,22 @@ function Dashboard() {
                           <div
                             className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${badgeColors[idx]}`}
                           >
-                            -{action.absoluteReduction} pts
+                            -{action.absoluteReduction} {tr("estimatedReduction", currentLang)}
                           </div>
                         </div>
 
                         {/* Explainability Nudge (Step 3 of 11B) */}
                         <div className="mt-2 text-[10px] text-muted-foreground border-t border-border/30 pt-1.5">
-                          <span className="font-bold text-teal">Why?</span>{" "}
+                          <span className="font-bold text-teal">
+                            {tr("whyQuestion", currentLang)}
+                          </span>{" "}
                           {action.id === "exercise_30_min"
-                            ? "Sedentary lifestyle contributes to high diabetic and vascular indicators."
+                            ? tr("whyExercise", currentLang)
                             : action.id === "lose_5kg"
-                              ? "Reducing body weight reduces loading strain on your cardiovascular system."
+                              ? tr("whyLoseWeight", currentLang)
                               : action.id === "improve_sleep"
-                                ? "Optimal sleep periods promote glycemic control and hormone balancing."
-                                : "Lifestyle adjustments reduce chronic physiological stresses."}
+                                ? tr("whySleep", currentLang)
+                                : tr("whyLifestyle", currentLang)}
                         </div>
                       </div>
                     );
@@ -808,13 +822,16 @@ function Dashboard() {
                           <div className="min-w-0">
                             <p className="text-xs font-semibold text-foreground">{p.action}</p>
                             <p className="text-[10px] text-teal mt-0.5">
-                              ↓ {Math.abs(p.estimatedImpact)} pts estimated
+                              ↓ {Math.abs(p.estimatedImpact)}{" "}
+                              {tr("estimatedReduction", currentLang)}
                             </p>
                           </div>
                         </div>
                         <div className="mt-2 text-[10px] text-muted-foreground border-t border-border/30 pt-1.5">
-                          <span className="font-bold text-teal">Why?</span> Action targets your main
-                          clinical risk metrics.
+                          <span className="font-bold text-teal">
+                            {tr("whyQuestion", currentLang)}
+                          </span>{" "}
+                          {tr("whyDefault", currentLang)}
                         </div>
                       </div>
                     ))
@@ -822,7 +839,7 @@ function Dashboard() {
                     <div className="flex items-center gap-2 rounded-lg border border-teal/20 bg-teal/5 p-3">
                       <Brain className="h-4 w-4 text-teal shrink-0" />
                       <p className="text-xs text-teal font-medium">
-                        Your profile is well-optimised. Keep up the healthy habits!
+                        {tr("wellOptimised", currentLang)}
                       </p>
                     </div>
                   )}
@@ -841,17 +858,15 @@ function Dashboard() {
               </div>
               <div>
                 <h3 className="font-display text-sm font-bold text-foreground">
-                  Expert Clinical Review
+                  {tr("expertClinicalReview", currentLang)}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  {expertReviewStatus === "pending" &&
-                    "Expert Review Status: Pending clinical specialist assignment. An expert will review your profile shortly."}
+                  {expertReviewStatus === "pending" && tr("expertReviewStatusPending", currentLang)}
                   {expertReviewStatus === "accepted" &&
-                    "Expert Review Status: Accepted! Real-time clinical chat room is now active."}
+                    tr("expertReviewStatusAccepted", currentLang)}
                   {expertReviewStatus === "completed" &&
-                    "Expert Review Status: Review Completed! Click to view specialist feedback report."}
-                  {!expertReviewStatus &&
-                    "Would you like a human medical expert to review your personalized health risk report?"}
+                    tr("expertReviewStatusCompleted", currentLang)}
+                  {!expertReviewStatus && tr("expertReviewStatusNone", currentLang)}
                 </p>
               </div>
             </div>
@@ -860,7 +875,9 @@ function Dashboard() {
               className="bg-teal text-white hover:bg-teal/95 font-bold text-xs h-9 rounded-lg shrink-0 w-full sm:w-auto shadow-sm"
             >
               <Link to="/expert-review">
-                {expertReviewStatus ? "Check Status" : "Request Review"}
+                {expertReviewStatus
+                  ? tr("checkStatus", currentLang)
+                  : tr("requestReview", currentLang)}
               </Link>
             </Button>
           </CardContent>
@@ -872,23 +889,24 @@ function Dashboard() {
 
 export function EmptyState() {
   const navigate = useNavigate();
+  const currentLang = useLanguage();
   return (
     <div className="mx-auto max-w-xl px-6 py-24 text-center flex flex-col items-center justify-center">
       <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-accent text-teal shadow-card-soft">
         <ArrowRight className="h-7 w-7 text-teal" />
       </div>
       <h1 className="mt-6 font-display text-2xl font-bold tracking-tight text-foreground">
-        Complete assessment to generate your health profile
+        {tr("emptyStateTitle", currentLang)}
       </h1>
       <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-md">
-        Answer a few clinical and lifestyle questions to view your personalized health dashboard.
+        {tr("emptyStateDesc", currentLang)}
       </p>
 
       <Button
         onClick={() => navigate({ to: "/assessment" })}
         className="mt-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all font-semibold px-6 py-2 h-11"
       >
-        <span>Start Assessment</span>
+        <span>{tr("startAssessment", currentLang)}</span>
         <ArrowRight className="h-4 w-4" />
       </Button>
     </div>
@@ -906,15 +924,16 @@ export function LedgerTable({
     statusColor?: string;
   }>;
 }) {
+  const currentLang = useLanguage();
   return (
     <div className="overflow-x-auto rounded-lg border border-border/70">
       <table className="w-full text-left text-xs font-mono">
         <thead>
           <tr className="border-b border-border bg-surface-muted text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            <th className="px-4 py-3 font-semibold">Parameter Description</th>
-            <th className="px-4 py-3 text-right font-semibold">Result Value</th>
-            <th className="px-4 py-3 font-semibold">Reference Interval</th>
-            <th className="px-4 py-3 text-right font-semibold">Status</th>
+            <th className="px-4 py-3 font-semibold">{tr("parameterDesc", currentLang)}</th>
+            <th className="px-4 py-3 text-right font-semibold">{tr("resultValue", currentLang)}</th>
+            <th className="px-4 py-3 font-semibold">{tr("referenceInterval", currentLang)}</th>
+            <th className="px-4 py-3 text-right font-semibold">{tr("status", currentLang)}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border/40 bg-surface">
@@ -930,7 +949,7 @@ export function LedgerTable({
                   }`}
                 >
                   <span className="h-1 w-1 rounded-full bg-current" />
-                  {item.status || "Recorded"}
+                  {item.status || tr("recordedStatus", currentLang)}
                 </span>
               </td>
             </tr>
@@ -952,15 +971,16 @@ export function RiskLedgerTable({
     rationale: string;
   }>;
 }) {
+  const currentLang = useLanguage();
   return (
     <div className="overflow-x-auto rounded-lg border border-border/70">
       <table className="w-full text-left text-xs font-mono">
         <thead>
           <tr className="border-b border-border bg-surface-muted text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            <th className="px-4 py-3 font-semibold">Analyzed Condition</th>
-            <th className="px-4 py-3 text-right font-semibold">Risk Index</th>
-            <th className="px-4 py-3 font-semibold">Risk Level</th>
-            <th className="px-4 py-3 font-semibold">Statistical Rationale Preview</th>
+            <th className="px-4 py-3 font-semibold">{tr("analyzedCondition", currentLang)}</th>
+            <th className="px-4 py-3 text-right font-semibold">{tr("riskIndex", currentLang)}</th>
+            <th className="px-4 py-3 font-semibold">{tr("riskLevel", currentLang)}</th>
+            <th className="px-4 py-3 font-semibold">{tr("statisticalRationale", currentLang)}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border/40 bg-surface">

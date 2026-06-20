@@ -4,16 +4,19 @@ import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { HeartPulse, Activity, Brain, BookOpen, ExternalLink } from "lucide-react";
+import { HeartPulse, Activity, Brain, BookOpen } from "lucide-react";
+import { useLanguage, tr } from "@/lib/i18n";
 
 export const Route = createFileRoute("/clinical-sources")({
   component: ClinicalSourcesPage,
 });
 
 function ClinicalSourcesPage() {
+  const currentLang = useLanguage();
+
   useEffect(() => {
-    document.title = "Clinical Sources — HealthGuard";
-  }, []);
+    document.title = `${tr("clinicalSources", currentLang)} — HealthGuard`;
+  }, [currentLang]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-between">
@@ -28,15 +31,13 @@ function ClinicalSourcesPage() {
               variant="secondary"
               className="rounded-full bg-teal/10 text-teal border border-teal/20 hover:bg-teal/20"
             >
-              Evidence-Based Medicine
+              {tr("evidenceBasedMedicine", currentLang)}
             </Badge>
             <h1 className="mt-4 font-display text-4xl sm:text-5xl font-bold leading-tight tracking-tight text-foreground">
-              Clinical Guidelines & Sources
+              {tr("clinicalGuidelinesTitle", currentLang)}
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-              HealthGuard's deterministic risk scoring and AI insights are structured based on
-              recognized clinical guidelines and publications from leading global health
-              organizations.
+              {tr("clinicalGuidelinesDesc", currentLang)}
             </p>
           </div>
         </section>
@@ -53,23 +54,23 @@ function ClinicalSourcesPage() {
                   </div>
                   <div>
                     <h3 className="font-display text-lg font-bold text-foreground">
-                      Diabetes Risk
+                      {tr("diabetesRisk", currentLang)}
                     </h3>
-                    <p className="text-xs text-muted-foreground">Type 2 Diabetes Screening</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tr("diabetesScreening", currentLang)}
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-3 pt-2">
                   <div className="text-xs font-semibold uppercase tracking-wider text-teal font-mono">
-                    Primary Source
+                    {tr("primarySource", currentLang)}
                   </div>
                   <p className="text-sm font-semibold text-foreground">
-                    American Diabetes Association (ADA) Standards of Care in Diabetes
+                    {tr("adaSourceTitle", currentLang)}
                   </p>
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    Our scoring adapts risk criteria such as age threshold (onset risk changes at
-                    35+ or 45+), body mass index (BMI) thresholds, physical inactivity, family
-                    history of diabetes, and gestational considerations.
+                    {tr("adaSourceDesc", currentLang)}
                   </p>
                 </div>
               </CardContent>
@@ -84,24 +85,23 @@ function ClinicalSourcesPage() {
                   </div>
                   <div>
                     <h3 className="font-display text-lg font-bold text-foreground">
-                      Hypertension Risk
+                      {tr("hypertensionRisk", currentLang)}
                     </h3>
-                    <p className="text-xs text-muted-foreground">Blood Pressure Classifications</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tr("bpClassification", currentLang)}
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-3 pt-2">
                   <div className="text-xs font-semibold uppercase tracking-wider text-teal font-mono">
-                    Primary Source
+                    {tr("primarySource", currentLang)}
                   </div>
                   <p className="text-sm font-semibold text-foreground">
-                    ACC/AHA Hypertension Guidelines & JNC 8 Reference
+                    {tr("accAhaSourceTitle", currentLang)}
                   </p>
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    Classification ranges mapping systolic/diastolic metrics into normal (&lt;120/80
-                    mmHg), elevated (120-129/&lt;80 mmHg), Stage 1 (130-139 or 80-89 mmHg), and
-                    Stage 2 (&ge;140/90 mmHg) to determine active cardiovascular lifestyle
-                    guidelines.
+                    {tr("accAhaSourceDesc", currentLang)}
                   </p>
                 </div>
               </CardContent>
@@ -116,23 +116,23 @@ function ClinicalSourcesPage() {
                   </div>
                   <div>
                     <h3 className="font-display text-lg font-bold text-foreground">
-                      Heart Disease Risk
+                      {tr("heartDiseaseRisk", currentLang)}
                     </h3>
-                    <p className="text-xs text-muted-foreground">Cardiovascular Risk Estimation</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tr("cvRiskEstimation", currentLang)}
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-3 pt-2">
                   <div className="text-xs font-semibold uppercase tracking-wider text-teal font-mono">
-                    Primary Source
+                    {tr("primarySource", currentLang)}
                   </div>
                   <p className="text-sm font-semibold text-foreground">
-                    AHA/ACC ASCVD Risk Estimator & Pooled Cohort Equations
+                    {tr("ahaAccSourceTitle", currentLang)}
                   </p>
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    Predictive risk evaluation incorporating cholesterol ratios, blood pressure
-                    management status, diabetes diagnostics, smoking status, age range, and gender
-                    factor as standard parameters for general cardiovascular tracking.
+                    {tr("cvSourceDesc", currentLang)}
                   </p>
                 </div>
               </CardContent>
@@ -145,13 +145,10 @@ function ClinicalSourcesPage() {
           <div className="mx-auto max-w-4xl px-6 flex flex-col items-center gap-4">
             <BookOpen className="h-8 w-8 text-teal" />
             <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
-              Educational Project Statement
+              {tr("projectStatementTitle", currentLang)}
             </h2>
             <p className="text-center text-sm leading-relaxed text-muted-foreground max-w-2xl">
-              HealthGuard's algorithms are structured as a demonstration of technical logic and
-              public health framework implementations. Calculations are estimates and must never be
-              interpreted as diagnostic, prescriptive, or clinical advice. Always review symptoms
-              and health plans with a certified healthcare provider.
+              {tr("projectStatementDesc", currentLang)}
             </p>
           </div>
         </section>

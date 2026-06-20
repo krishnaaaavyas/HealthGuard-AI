@@ -81,8 +81,8 @@ function ProgressPage() {
   const [logging, setLogging] = useState(false);
 
   useEffect(() => {
-    document.title = "Progress Tracking — HealthGuard";
-  }, []);
+    document.title = tr("progressTracker", currentLang) + " — " + tr("appName", currentLang);
+  }, [currentLang]);
 
   if (!profile || !result) {
     return (
@@ -91,16 +91,16 @@ function ProgressPage() {
           <Activity className="h-7 w-7" />
         </div>
         <h1 className="mt-6 font-display text-3xl font-bold tracking-tight text-foreground">
-          Assessment Required
+          {tr("assessmentRequired", currentLang)}
         </h1>
         <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-md">
-          Please complete your initial health assessment before opening the Progress Tracker.
+          {tr("fit_please_complete", currentLang)}
         </p>
         <Button
           onClick={() => navigate({ to: "/assessment" })}
           className="mt-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold px-6 py-2 h-11"
         >
-          <span>Start Assessment</span>
+          <span>{tr("startAssessment", currentLang)}</span>
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
@@ -122,7 +122,7 @@ function ProgressPage() {
   async function handleLogWeight() {
     const w = parseFloat(logWeightVal);
     if (!w || isNaN(w)) {
-      toast.error("Please enter a valid weight");
+      toast.error(tr("fit_valid_weight_toast", currentLang));
       return;
     }
     setLogging(true);
@@ -149,14 +149,14 @@ function ProgressPage() {
           setResult(data.result);
           setHistory(data.history);
           setLogWeightVal("");
-          toast.success(`Logged weight: ${w} kg`);
+          toast.success(`${tr("fit_logged_weight_toast", currentLang)}${w} kg`);
         }
       } else {
-        toast.error("Failed to log weight");
+        toast.error(tr("fit_failed_log_weight_toast", currentLang));
       }
     } catch (err) {
       console.error(err);
-      toast.error("Connection failed");
+      toast.error(tr("fit_connection_failed_toast", currentLang));
     } finally {
       setLogging(false);
     }
@@ -176,23 +176,27 @@ function ProgressPage() {
           {tr("progressTracker", currentLang)}
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-relaxed">
-          Log weight and track clinical risk improvements over time.
+          {tr("progressSubtitle", currentLang)}
         </p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Assessments completed" value={`${history.length}`} icon={Calendar} />
         <KpiCard
-          label="Current weight"
+          label={tr("fit_assessments_completed", currentLang)}
+          value={`${history.length}`}
+          icon={Calendar}
+        />
+        <KpiCard
+          label={tr("fit_current_weight", currentLang)}
           value={`${currWeight} kg`}
           icon={Weight}
           hint={
             weightLost > 0
-              ? `▼ ${weightLost.toFixed(1)} kg lost`
+              ? `▼ ${weightLost.toFixed(1)} kg ${tr("fit_lost", currentLang)}`
               : weightLost < 0
-                ? `▲ ${Math.abs(weightLost).toFixed(1)} kg gained`
-                : "no change"
+                ? `▲ ${Math.abs(weightLost).toFixed(1)} kg ${tr("fit_gained", currentLang)}`
+                : tr("fit_no_change", currentLang)
           }
           hintColor={
             weightLost > 0
@@ -203,17 +207,21 @@ function ProgressPage() {
           }
         />
         <KpiCard
-          label="Goal weight"
+          label={tr("fit_goal_weight", currentLang)}
           value={`${goalWeight} kg`}
           icon={Target}
-          hint={toGoalWeight > 0 ? `${toGoalWeight.toFixed(1)} kg to go` : "goal reached"}
+          hint={
+            toGoalWeight > 0
+              ? `${toGoalWeight.toFixed(1)} kg ${tr("fit_to_go", currentLang)}`
+              : tr("fit_goal_reached", currentLang)
+          }
           hintColor={toGoalWeight > 0 ? "text-amber-500" : "text-green-500"}
         />
         <KpiCard
-          label="Current overall score"
+          label={tr("fit_current_overall_score", currentLang)}
           value={`${result.overallScore}`}
           icon={TrendingDown}
-          hint={`${result.overallRisk} risk`}
+          hint={`${tr(result.overallRisk.toLowerCase() === "low" ? "low" : result.overallRisk.toLowerCase() === "moderate" ? "moderateRisk" : "high", currentLang)} ${tr("fit_risk", currentLang)}`}
         />
       </div>
 
@@ -221,14 +229,14 @@ function ProgressPage() {
       <Card className="border-border bg-surface shadow-card-soft">
         <CardHeader className="pb-3 border-b border-border/40">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Plus className="h-4 w-4 text-teal" /> Record Current Weight
+            <Plus className="h-4 w-4 text-teal" /> {tr("fit_record_current_weight", currentLang)}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
           <div className="flex flex-col sm:flex-row items-end gap-4 max-w-md">
             <div className="flex-1 space-y-1.5">
               <Label htmlFor="weight-input" className="text-xs font-semibold">
-                Weight (kg)
+                {tr("weight", currentLang)}
               </Label>
               <Input
                 id="weight-input"
@@ -248,10 +256,10 @@ function ProgressPage() {
             >
               {logging ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {tr("fit_logging", currentLang)}
                 </>
               ) : (
-                "Record Weight"
+                tr("fit_record_weight", currentLang)
               )}
             </Button>
           </div>
@@ -263,10 +271,10 @@ function ProgressPage() {
         <Card className="border-border border-dashed bg-surface shadow-card-soft p-8 text-center flex flex-col items-center justify-center min-h-[250px]">
           <Activity className="h-10 w-10 text-teal/40 mb-3" />
           <h3 className="font-display text-sm font-bold text-foreground">
-            Progress history unavailable
+            {tr("fit_progress_history_unavailable", currentLang)}
           </h3>
           <p className="text-xs text-muted-foreground mt-1 max-w-xs leading-relaxed">
-            Complete additional assessments to unlock trend analysis.
+            {tr("fit_complete_assessments_trend", currentLang)}
           </p>
         </Card>
       ) : (
@@ -277,7 +285,7 @@ function ProgressPage() {
             <Card className="border-border shadow-card-soft bg-surface">
               <CardHeader className="pb-2 border-b border-border/40">
                 <CardTitle className="font-display text-sm font-bold text-foreground">
-                  Weight Tracking
+                  {tr("fit_weight_tracking", currentLang)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="h-[260px] pt-4">
@@ -310,7 +318,7 @@ function ProgressPage() {
             <Card className="border-border shadow-card-soft bg-surface">
               <CardHeader className="pb-2 border-b border-border/40">
                 <CardTitle className="font-display text-sm font-bold text-foreground">
-                  Risk Score Over Time
+                  {tr("fit_risk_score_over_time", currentLang)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="h-[260px] pt-4">
