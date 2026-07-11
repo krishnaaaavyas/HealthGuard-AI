@@ -130,7 +130,10 @@ function ProgressPage() {
     document.title = tr("progressTracker", currentLang) + " — " + tr("appName", currentLang);
   }, [currentLang]);
 
-  if (!profile || !result) {
+  const hasValidResult =
+    Boolean(result) && typeof result?.overallRisk === "string" && Boolean(profile);
+
+  if (!hasValidResult) {
     return (
       <div className="mx-auto max-w-xl px-6 py-24 text-center flex flex-col items-center justify-center">
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-accent text-teal shadow-card-soft">
@@ -143,6 +146,7 @@ function ProgressPage() {
           {tr("fit_please_complete", currentLang)}
         </p>
         <Button
+          type="button"
           onClick={() => navigate({ to: "/assessment" })}
           className="mt-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold px-6 py-2 h-11"
         >

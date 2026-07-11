@@ -380,6 +380,33 @@ function ExpertReviewPage() {
     );
   }
 
+  const hasValidResult =
+    Boolean(result) && typeof result?.overallRisk === "string" && Boolean(profile);
+
+  if (!hasValidResult) {
+    return (
+      <div className="mx-auto max-w-xl px-6 py-24 text-center flex flex-col items-center justify-center">
+        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-accent text-teal shadow-card-soft">
+          <Stethoscope className="h-7 w-7" />
+        </div>
+        <h1 className="mt-6 font-display text-3xl font-bold tracking-tight text-foreground">
+          {tr("assessmentRequired", currentLang)}
+        </h1>
+        <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-md">
+          Please complete your health assessment before requesting an expert medical review.
+        </p>
+        <Button
+          type="button"
+          onClick={() => navigate({ to: "/assessment" })}
+          className="mt-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold px-6 py-2 h-11"
+        >
+          <span>{tr("startAssessment", currentLang)}</span>
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
   // Determine state
   const requestCount = requests.length;
   const isPending = activeRequest?.status === "pending";

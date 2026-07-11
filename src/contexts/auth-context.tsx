@@ -185,8 +185,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } catch {
             setHasCompletedAssessment(false);
           }
-        } finally {
-          setLoading(false);
         }
 
         if (firestoreSuccess && !isOffline) {
@@ -280,7 +278,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               clearTimeout(syncTimeoutRef.current);
               syncTimeoutRef.current = null;
             }
-            console.log("Auth loading end");
           }
         } else {
           isSyncingRef.current = false;
@@ -289,8 +286,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             clearTimeout(syncTimeoutRef.current);
             syncTimeoutRef.current = null;
           }
-          console.log("Auth loading end");
         }
+
+        setLoading(false);
+        console.log("Auth loading end");
       } else {
         setHasCompletedAssessment(null);
         setLoading(false);

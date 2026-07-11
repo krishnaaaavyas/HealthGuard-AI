@@ -66,7 +66,7 @@ function Dashboard() {
   const hasValidHealthResult =
     Boolean(result) && typeof result?.overallRisk === "string" && Boolean(profile);
 
-  // Inconsistent-state self-repair
+  // Inconsistent-state logger (no automatic cloud mutations)
   useEffect(() => {
     if (!authLoading && !authSyncing && hasCompletedAssessment === true) {
       const isValid =
@@ -74,28 +74,11 @@ function Dashboard() {
 
       if (!isValid) {
         console.warn(
-          "[Dashboard Recovery] Inconsistent state: hasCompletedAssessment is true but profile/result is missing. Resetting...",
+          "[Dashboard Inconsistency] hasCompletedAssessment is true in cloud, but local profile/result is missing or incomplete.",
         );
-        setHasCompletedAssessment(false);
-        if (isConfigured && auth.currentUser) {
-          const uid = auth.currentUser.uid;
-          const userRef = doc(db, "users", uid);
-          setDoc(userRef, { hasCompletedAssessment: false }, { merge: true })
-            .then(() => console.log("[Dashboard Recovery] Reset completion status in cloud db"))
-            .catch((err) =>
-              console.error("[Dashboard Recovery] Failed to reset cloud status:", err),
-            );
-        }
       }
     }
-  }, [
-    result,
-    profile,
-    authLoading,
-    authSyncing,
-    hasCompletedAssessment,
-    setHasCompletedAssessment,
-  ]);
+  }, [result, profile, authLoading, authSyncing, hasCompletedAssessment]);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 

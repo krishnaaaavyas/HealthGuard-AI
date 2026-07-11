@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useLanguage, tr } from "@/lib/i18n";
 import { useAuth } from "@/contexts/auth-context";
@@ -22,27 +22,20 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-  const { user, loading, syncing, logout, hasCompletedAssessment } = useAuth();
+  const { user, loading, syncing, logout } = useAuth();
   const navigate = useNavigate();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const currentLang = useLanguage();
 
   useEffect(() => {
-    if (!loading && !syncing) {
-      if (!user) {
-        navigate({ to: "/" });
-      } else if (hasCompletedAssessment !== null) {
-        // If the user has not completed their onboarding assessment, force them to go there.
-        // If they have completed it, do NOT block them from visiting /assessment for reassessment.
-        if (!hasCompletedAssessment) {
-          if (pathname !== "/assessment") {
-            console.log("Redirecting to dashboard/assessment");
-            navigate({ to: "/assessment" });
-          }
-        }
-      }
+    if (loading || syncing) return;
+
+    if (!user) {
+      navigate({
+        to: "/",
+        replace: true,
+      });
     }
-  }, [user, loading, syncing, hasCompletedAssessment, pathname, navigate]);
+  }, [user, loading, syncing, navigate]);
 
   if (loading || syncing) {
     return (
