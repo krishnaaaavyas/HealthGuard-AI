@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { isConfigured, db, auth } from "@/lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/contexts/auth-context";
+import { profileSyncService } from "@/lib/profile-sync";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -55,20 +56,13 @@ const steps = [
 
 function AssessmentPage() {
   const { mode } = Route.useSearch();
-  const { hasCompletedAssessment, loading: authLoading } = useAuth();
+  const { hasCompletedAssessment, loading: authLoading, setHasCompletedAssessment } = useAuth();
   const navigate = useNavigate();
 
-  // Assessment route must remain accessible for first assessment, reassessment, and recovery.
-  // No automatic redirection away from it is needed based on hasCompletedAssessment.
-
-  useEffect(() => {
-    document.title = "Health Assessment — HealthGuard";
-  }, []);
-  const { setHasCompletedAssessment } = useAuth();
-  const assess = assessHealth;
-  const [, setResult] = useHealthResult();
-  const [profile, setProfile] = useProfile();
   const [lang] = useLangPref();
+  const [profile, setProfile] = useProfile();
+  const [, setResult] = useHealthResult();
+
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -90,9 +84,8 @@ function AssessmentPage() {
 
   async function submit(values: Profile) {
     setLoading(true);
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
     try {
-      const res = (await assess({
+      const res = (await assessHealth({
         data: {
           ...values,
           age: Number(values.age),
@@ -102,7 +95,7 @@ function AssessmentPage() {
         },
       })) as HealthResult & { bmi: number };
 
-      // 1. Save profile, result, and history locally first
+      // 1. Save profile, result, and history locally
       setProfile(values);
       setResult(res);
 
@@ -115,147 +108,19 @@ function AssessmentPage() {
       };
       pushHistory(newHistoryEntry);
 
-      // 2. Synchronously write profile, result, and history to the backend API and wait for it to succeed
-      if (auth.currentUser) {
-        try {
-          const idToken = await auth.currentUser.getIdToken();
-          const localHistoryRaw = localStorage.getItem("hg.history.v1");
-          const historyList = localHistoryRaw ? JSON.parse(localHistoryRaw) : [];
+      const localHistoryRaw = localStorage.getItem("hg.history.v1");
+      const historyList = localHistoryRaw ? JSON.parse(localHistoryRaw) : [];
 
-          const syncBody = {
-            ...values,
-            result: res,
-            history: historyList,
-          };
-
-          console.log("[Assessment Submit] Pushing assessment data to Express backend database...");
-          const backendResp = await fetch(`${API_URL}/api/profile`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${idToken}`,
-            },
-            body: JSON.stringify(syncBody),
-          });
-          if (!backendResp.ok) {
-            console.error(
-              "Backend database sync failed during assessment submit:",
-              backendResp.statusText,
-            );
-          } else {
-            console.log("Backend database sync completed successfully.");
-          }
-        } catch (syncErr) {
-          console.error("Failed to sync assessment changes to backend database:", syncErr);
-        }
-      }
-
-      // 3. Only after backend sync is finished, update onboarding status in Firestore users collection
-      if (isConfigured && auth.currentUser) {
-        const uid = auth.currentUser.uid;
-        console.log(`[Firestore Debug] [Assessment Submit] Starting db write for users/${uid}`);
-        try {
-          const userRef = doc(db, "users", uid);
-          console.log(`[Firestore Debug] [Assessment Submit] Fetching user doc: users/${uid}`);
-          const fetchStartTime = Date.now();
-          const userSnap = await getDoc(userRef);
-          const exists = userSnap.exists();
-          const userData = exists ? userSnap.data() : null;
-          console.log(
-            `[Firestore Debug] [Assessment Submit] Fetch completed in ${Date.now() - fetchStartTime}ms. Exists: ${exists}`,
-          );
-
-          const updateData: Record<string, unknown> = {
-            uid: uid,
-            email: auth.currentUser.email,
-            displayName: auth.currentUser.displayName || null,
-            hasCompletedAssessment: true,
-            lastAssessmentUpdatedAt: serverTimestamp(),
-          };
-
-          if (!userData || !userData.assessmentCompletedAt) {
-            updateData.assessmentCompletedAt = serverTimestamp();
-          } else {
-            updateData.assessmentCompletedAt = userData.assessmentCompletedAt;
-          }
-
-          console.log(
-            `[Firestore Debug] [Assessment Submit] Setting user doc users/${uid} with payload:`,
-            updateData,
-          );
-          const writeStartTime = Date.now();
-          await setDoc(userRef, updateData, { merge: true });
-          console.log(
-            `[Firestore Debug] [Assessment Submit] setDoc completed successfully in ${Date.now() - writeStartTime}ms`,
-          );
-        } catch (dbErr: unknown) {
-          console.error(
-            "[Firestore Debug] [Assessment Submit] Firestore update failed during assessment submission:",
-            dbErr,
-          );
-          toast.error("Cloud sync failed. Your assessment is saved locally.");
-        }
-      }
-
-      // 4. Update the auth context state and navigate to the dashboard
+      // 2. Update the auth context state and navigate to the dashboard instantly
       setHasCompletedAssessment(true);
       toast.success("Assessment complete");
-
-      // Trigger background fetch of AI advice (non-blocking)
-      if (auth.currentUser) {
-        auth.currentUser.getIdToken().then((idToken) => {
-          fetch(`${API_URL}/api/risk/advice`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${idToken}`,
-            },
-            body: JSON.stringify({
-              ...values,
-              age: Number(values.age),
-              heightCm: Number(values.heightCm),
-              weightKg: Number(values.weightKg),
-              language: lang,
-            }),
-          })
-            .then((resp) => {
-              if (resp.ok) return resp.json();
-            })
-            .then((data) => {
-              if (data && data.success && data.advice) {
-                const currentResult = localStorage.getItem("hg.result.v1");
-                if (currentResult) {
-                  const parsed = JSON.parse(currentResult);
-                  parsed.rationale = data.advice.rationale;
-                  parsed.dietPlan = data.advice.dietPlan;
-                  parsed.exercisePlan = data.advice.exercisePlan;
-                  parsed.preventionTips = data.advice.preventionTips;
-                  parsed.isAiEnriched = true;
-                  localStorage.setItem("hg.result.v1", JSON.stringify(parsed));
-                  window.dispatchEvent(new CustomEvent("hg:store"));
-                  toast.success("AI health recommendation coach plans ready.");
-                }
-              }
-            })
-            .catch((err) => {
-              console.error("Failed to load background AI advice:", err);
-            });
-        }).catch((err) => {
-          console.error("Failed to retrieve token for AI advice:", err);
-        });
-      }
-
       navigate({ to: "/dashboard" });
+
+      // 3. Queue local-first background synchronization (non-blocking)
+      profileSyncService.queueProfileSync(values, res, historyList);
     } catch (e: unknown) {
       console.error("Assessment submit flow failure:", e);
-      const errMsg = (e as Error)?.message || "";
-      if (
-        !errMsg.includes("firestore") &&
-        !errMsg.includes("database") &&
-        !errMsg.includes("network")
-      ) {
-        toast.error("Assessment failed. Please try again.");
-      }
+      toast.error("Assessment calculation failed. Please verify inputs.");
     } finally {
       setLoading(false);
     }
