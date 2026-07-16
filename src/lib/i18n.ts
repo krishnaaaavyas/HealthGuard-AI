@@ -10,6 +10,66 @@ type Dict = Record<string, { en: string; hi: string; gu: string }>;
 
 export const translations: Dict = {
   appName: { en: "HealthGuard AI", hi: "हेल्थगार्ड एआई", gu: "હેલ્થગાર્ડ એઆઈ" },
+  diabetesV2Title: {
+    en: "Diabetes Risk Profile (V2 Engine)",
+    hi: "मधुमेह जोखिम प्रोफ़ाइल (V2 इंजन)",
+    gu: "ડાયાબિટીસ જોખમ પ્રોફાઇલ (V2 એન્જિન)",
+  },
+  evidenceCompleteness: {
+    en: "Evidence Completeness",
+    hi: "साक्ष्य पूर्णता",
+    gu: "પુરાવા પૂર્ણતા",
+  },
+  modelversion: {
+    en: "Model Version",
+    hi: "मॉडल संस्करण",
+    gu: "મોડેલ વર્ઝન",
+  },
+  lifestyleOnly: {
+    en: "Lifestyle-only (preliminary)",
+    hi: "केवल जीवनशैली (प्रारंभिक)",
+    gu: "માત્ર જીવનશૈલી (પ્રારંભિક)",
+  },
+  glucoseCompleted: {
+    en: "Assessment with blood glucose",
+    hi: "रक्त शर्करा के साथ मूल्यांकन",
+    gu: "બ્લડ ગ્લુકોઝ સાથે મૂલ્યાંકન",
+  },
+  verifiedHba1c: {
+    en: "Assessment with verified HbA1c",
+    hi: "सत्यापित HbA1c के साथ मूल्यांकन",
+    gu: "ચકાસાયેલ HbA1c સાથે મૂલ્યાંકન",
+  },
+  insufficientEvidence: {
+    en: "Insufficient evidence",
+    hi: "अपर्याप्त साक्ष्य",
+    gu: "અપૂરતા પુરાવા",
+  },
+  increasingFactors: {
+    en: "Factors increasing model estimate:",
+    hi: "मॉडल अनुमान बढ़ाने वाले कारक:",
+    gu: "મોડેલ અંદાજ વધારતા પરિબળો:",
+  },
+  protectiveFactors: {
+    en: "Protective factors:",
+    hi: "सुरक्षात्मक कारक:",
+    gu: "રક્ષણાત્મક પરિબળો:",
+  },
+  missingEvidence: {
+    en: "Missing critical evidence:",
+    hi: "लापता महत्वपूर्ण साक्ष्य:",
+    gu: "ખૂટતા મહત્વપૂર્ણ પુરાવા:",
+  },
+  nextSteps: {
+    en: "Preventive next steps:",
+    hi: "निवारक अगले कदम:",
+    gu: "નિવારક આગલા પગલાં:",
+  },
+  medDisclaimerV2: {
+    en: "Disclaimer: This assessment is based on a baseline statistical model for lifestyle awareness. It is not diagnostic. Consult a physician for clinical testing.",
+    hi: "अस्वीकरण: यह मूल्यांकन जीवनशैली जागरूकता के लिए एक आधारभूत सांख्यिकीय मॉडल पर आधारित है। यह नैदानिक नहीं है। नैदानिक परीक्षण के लिए एक चिकित्सक से परामर्श करें।",
+    gu: "ડિસ્ક્લેમર: આ મૂલ્યાંકન જીવનશૈલી જાગૃતિ માટેના બેઝલાઇન આંકડાકીય મોડેલ પર આધારિત છે. તે ડાયગ્નોસ્ટિક નથી. ક્લિનિકલ પરીક્ષણ માટે ડૉક્ટરની સલાહ લો.",
+  },
   syncingRecord: {
     en: "Syncing health record...",
     hi: "स्वास्थ्य रिकॉर्ड सिंक किया जा रहा है...",

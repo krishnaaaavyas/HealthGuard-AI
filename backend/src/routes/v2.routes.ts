@@ -6,8 +6,12 @@ import {
   LabReportV2Schema,
   RecommendationV2Schema,
   RegionalContextV2Schema,
+  HealthContextSchema,
+  SafetyFlag,
+  HealthModuleResult,
 } from "../config/schemas-v2.js";
 import { isBackendFeatureEnabled } from "../config/feature-flags.js";
+import { diseaseModuleRegistry } from "../config/module-registry.js";
 
 const router = Router();
 
@@ -47,28 +51,112 @@ router.get("/ready", (_req, res) => {
 router.post("/health-assessment", requireAuth, async (req: AuthenticatedRequest, res) => {
   if (!isV2Enabled()) return v2DisabledResponse(res);
 
-  const parsed = HealthAssessmentV2Schema.safeParse(req.body);
+  const uid = req.user?.uid;
+  if (!uid) return res.status(400).json({ success: false, error: "Missing User UID" });
+
+  // Ensure userId is present in body matching authenticated user
+  if (!req.body.userId) {
+    req.body.userId = uid;
+  } else if (req.body.userId !== uid) {
+    return res.status(403).json({ success: false, error: "Forbidden: User ID mismatch" });
+  }
+
+  const parsed = HealthContextSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ success: false, error: "Validation Error", details: parsed.error.format() });
   }
 
-  const uid = req.user?.uid;
-  if (!uid) return res.status(400).json({ success: false, error: "Missing User UID" });
+  const context = parsed.data;
+  const assessment = context.assessment;
+
+  // Deriving BMI safely
+  let bmi = 0;
+  if (assessment.heightCm > 0 && assessment.weightKg > 0) {
+    bmi = assessment.weightKg / ((assessment.heightCm / 100) ** 2);
+  }
+  if (!isFinite(bmi) || isNaN(bmi) || bmi < 0) {
+    bmi = 0;
+  }
+
+  // Check red-flags
+  const safetyFlags: SafetyFlag[] = [];
+  if (assessment.systolicBP >= 180 || assessment.diastolicBP >= 120) {
+    safetyFlags.push({
+      flagType: "red-flag",
+      moduleId: "hypertension",
+      message: `Hypertensive emergency alert: Blood pressure measured at ${assessment.systolicBP}/${assessment.diastolicBP} mmHg. Seek immediate medical attention.`,
+      clinicalActionRequired: true,
+    });
+  }
+  if (assessment.fastingBloodSugar && (assessment.fastingBloodSugar >= 250 || assessment.fastingBloodSugar <= 50)) {
+    safetyFlags.push({
+      flagType: "red-flag",
+      moduleId: "diabetes",
+      message: `Glycemic emergency alert: Fasting blood sugar measured at ${assessment.fastingBloodSugar} mg/dL. Consult a physician immediately.`,
+      clinicalActionRequired: true,
+    });
+  }
+  const lowerSymptoms = (assessment.symptoms || "").toLowerCase();
+  if (lowerSymptoms.includes("chest pain") || lowerSymptoms.includes("shortness of breath")) {
+    safetyFlags.push({
+      flagType: "red-flag",
+      moduleId: "cardiovascular",
+      message: `Cardiac symptom warning: "${assessment.symptoms}" indicates potentially critical cardiovascular distress. Seek emergency medical attention.`,
+      clinicalActionRequired: true,
+    });
+  }
+
+  // Run modules independently (partial failure handling)
+  const moduleResults: HealthModuleResult[] = [];
+  for (const moduleName of Object.keys(diseaseModuleRegistry)) {
+    const module = diseaseModuleRegistry[moduleName];
+    if (module.isEligible(context)) {
+      try {
+        const result = await module.evaluate(context);
+        moduleResults.push(result);
+      } catch (err: any) {
+        moduleResults.push({
+          moduleId: module.moduleId,
+          moduleVersion: module.version,
+          resultType: module.moduleId === "cardiovascular" ? "risk-score" : "risk-tier",
+          status: "failed",
+          evidenceCompleteness: 0,
+          confidenceLevel: "insufficient",
+          topContributors: [],
+          protectiveFactors: [],
+          missingInputs: [],
+          recommendedActions: [],
+          recommendedTests: [],
+          safetyFlags: [{
+            flagType: "data-anomaly",
+            moduleId: module.moduleId,
+            message: `Evaluation failed: ${err.message || String(err)}`,
+            clinicalActionRequired: false,
+          }],
+        });
+      }
+    }
+  }
 
   try {
-    const data = parsed.data;
-    // Save to Firestore v2 collection
     const docRef = db.collection("assessmentsV2").doc(uid);
-    await docRef.set({
-      ...data,
-      userId: uid,
+    const savePayload = {
+      ...context,
+      bmi,
+      safetyFlags: [...safetyFlags, ...moduleResults.flatMap((r) => r.safetyFlags)],
+      moduleResults,
       updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    };
+    await docRef.set(savePayload, { merge: true });
 
-    return res.json({ success: true, message: "V2 Health assessment saved successfully.", data });
+    return res.json({
+      success: true,
+      message: "V2 Health assessment evaluated and saved successfully.",
+      data: savePayload,
+    });
   } catch (err: any) {
-    console.error("V2 health assessment save error:", err);
-    return res.status(500).json({ success: false, error: "Database Error: Failed to save V2 health assessment" });
+    console.error("V2 health assessment save/evaluate database error:", err);
+    return res.status(500).json({ success: false, error: "Database Error: Failed to save V2 health assessment results" });
   }
 });
 

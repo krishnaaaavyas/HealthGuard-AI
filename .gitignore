@@ -39,3 +39,12 @@ backend/.env
 .env
 .env.local
 .env.*.local
+
+# Python venv and data cache
+health-intelligence/data/
+health-intelligence/venv/
+health-intelligence/.venv/
+health-intelligence/__pycache__/
+health-intelligence/**/*.pyc
+health-intelligence/models/*.joblib
+health-intelligence/models/*.json

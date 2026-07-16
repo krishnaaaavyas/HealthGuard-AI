@@ -101,7 +101,7 @@ function useStored<T>(key: string): [T | null, (value: T | null) => void] {
   useEffect(() => {
     const sync = (e: Event) => {
       const detail = (e as CustomEvent).detail as { key?: string } | undefined;
-      if (!detail || detail.key === key) setVal(read<T>(key));
+      if (!detail || detail.key === key || detail.key === "all") setVal(read<T>(key));
     };
     window.addEventListener("hg:store", sync);
     window.addEventListener("storage", sync);
@@ -138,4 +138,29 @@ export function useLangPref(): [Lang, (l: Lang) => void] {
 export function pushHistory(entry: HistoryEntry) {
   const cur = read<HistoryEntry[]>(KEY_HISTORY) ?? [];
   write(KEY_HISTORY, [...cur, entry]);
+}
+
+export function hydrateHealthStore(data: {
+  profile?: Profile | null;
+  result?: StoredResult | null;
+  history?: HistoryEntry[] | null;
+}) {
+  if (typeof window === "undefined") return;
+  try {
+    if (data.profile !== undefined) {
+      if (data.profile === null) window.localStorage.removeItem(KEY_PROFILE);
+      else window.localStorage.setItem(KEY_PROFILE, JSON.stringify(data.profile));
+    }
+    if (data.result !== undefined) {
+      if (data.result === null) window.localStorage.removeItem(KEY_RESULT);
+      else window.localStorage.setItem(KEY_RESULT, JSON.stringify(data.result));
+    }
+    if (data.history !== undefined) {
+      if (data.history === null) window.localStorage.removeItem(KEY_HISTORY);
+      else window.localStorage.setItem(KEY_HISTORY, JSON.stringify(data.history));
+    }
+    window.dispatchEvent(new CustomEvent("hg:store", { detail: { key: "all" } }));
+  } catch (err) {
+    console.warn("hydrateHealthStore failed:", err);
+  }
 }

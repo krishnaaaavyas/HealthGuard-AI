@@ -9,7 +9,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint .",
-    "test": "tsx src/test-runner.ts && tsx src/test-v2-routes.ts"
+    "test": "tsx src/test-runner.ts && tsx src/test-v2-routes.ts && tsx src/test-v2-schemas.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
