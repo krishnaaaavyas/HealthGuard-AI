@@ -8,7 +8,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "tsx src/test-runner.ts && tsx src/test-v2-routes.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

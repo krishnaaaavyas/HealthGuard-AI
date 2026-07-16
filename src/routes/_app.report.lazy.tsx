@@ -126,7 +126,10 @@ function ReportPage() {
       const heightLabel = tr("heightLabel", currentLang);
       const weightLabel = tr("weightLabel", currentLang);
       const smokingLabel = tr("smoking", currentLang);
-      const smokingVal = tr(profile.smoking.toLowerCase() as keyof typeof translations, currentLang);
+      const smokingVal = tr(
+        profile.smoking.toLowerCase() as keyof typeof translations,
+        currentLang,
+      );
       const exerciseLabel = tr("exercise", currentLang);
       const exerciseVal = tr(
         profile.exercise.toLowerCase() as keyof typeof translations,
@@ -405,14 +408,20 @@ function ReportPage() {
         {/* Sidebar Summary */}
         <div className="space-y-6">
           <Card className="border-border bg-surface shadow-card-soft overflow-hidden relative">
-            <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: overallColor }} />
+            <div
+              className="absolute top-0 left-0 right-0 h-1"
+              style={{ backgroundColor: overallColor }}
+            />
             <CardHeader className="p-5">
               <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
                 {tr("fit_overall_score", currentLang)}
               </CardTitle>
             </CardHeader>
             <CardContent className="px-5 pb-5 pt-0 text-center">
-              <div className="font-display text-7xl font-bold tracking-tight" style={{ color: overallColor }}>
+              <div
+                className="font-display text-7xl font-bold tracking-tight"
+                style={{ color: overallColor }}
+              >
                 {result.overallScore}
                 <span className="text-xl text-muted-foreground font-normal">/80</span>
               </div>
@@ -424,7 +433,10 @@ function ReportPage() {
                   backgroundColor: `${overallColor}08`,
                 }}
               >
-                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: overallColor }} />
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: overallColor }}
+                />
                 {tr(
                   result.overallRisk.toLowerCase() === "low"
                     ? "low"

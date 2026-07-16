@@ -99,20 +99,24 @@ HealthGuard AI is a modern, patient-first web application designed to help indiv
 HealthGuard AI features a premium, production-grade performance architecture engineered to ensure a sub-second Time-to-Interactive (TTI) and bulletproof offline resilience:
 
 ### 1. Local-First Architecture (`PendingSyncQueue`)
+
 - **Instant Flow**: Submitting the health assessment calculates risk metrics locally, updates UI context, and redirects the user to the dashboard instantly.
 - **Background Pipeline**: Profile synchronizations, Firestore writes, and AI advice generation run concurrently in the background using `profileSyncService`.
 - **Offline Recovery**: If network connection is lost, updates are held in `hg.pending-sync.v1` and automatically synchronized when the browser detects a restore of internet connectivity (`online` events).
 
 ### 2. Consolidated Dashboard Bootstrap Endpoint
+
 - **Unified Query**: Replaced 5 sequential REST calls with a single consolidated `GET /api/dashboard/bootstrap` endpoint.
 - **Concurrent Execution**: Queries user state, expert reviews, and nudges in parallel via `Promise.all`.
 - **Dynamic Calculation**: Attributes risk drivers and ranks action priorities on-the-fly, completely bypassing Gemini API dependencies for initial dashboard load.
 
 ### 3. Decoupled AI Pipeline & Hashing Cache
+
 - **Decoupled API**: Clinical calculation (`POST /api/risk/calculate`) is separated from AI guidance (`POST /api/risk/advice`), allowing the app to respond in under 100ms.
 - **Snapshot Cache**: Generates a 64-bit payload hash for the profile state. If the profile has not changed, the app retrieves the cached clinical recommendation from Firestore in under 200ms, saving Gemini API resources.
 
 ### 4. Advanced Bundle Optimization & Route Splitting
+
 - **Route-level Chunking**: Split all main views (Dashboard, Scanner, Progress, Expert Review, Assessment, Report) into dynamically imported TanStack Router lazy routes (`.lazy.tsx` files).
 - **On-Demand Imports**: Dynamically loads heavy modules like `jsPDF` only when the user clicks "Download Report".
 - **Result**: Reduced the initial JS bundle payload size from **2.3 MB** to **586 kB** (a 75% reduction).

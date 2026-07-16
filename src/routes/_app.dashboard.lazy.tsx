@@ -9,7 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowRight, Brain, Download, TrendingDown, Info, Stethoscope, RefreshCw, Loader2, Activity } from "lucide-react";
+import {
+  ArrowRight,
+  Brain,
+  Download,
+  TrendingDown,
+  Info,
+  Stethoscope,
+  RefreshCw,
+  Loader2,
+  Activity,
+} from "lucide-react";
 import { apiClient, ApiError } from "@/lib/api-client";
 import { startMeasure, endMeasure } from "@/lib/timing";
 import { EmptyState, LedgerTable, RiskLedgerTable } from "./_app.dashboard";
@@ -358,7 +368,8 @@ function Dashboard() {
   }
 
   // Render Skeleton while auth is parsing or local profile is empty
-  const isSyncingFirstTime = (bootstrapLoading || authLoading || authSyncing) && !hasValidHealthResult;
+  const isSyncingFirstTime =
+    (bootstrapLoading || authLoading || authSyncing) && !hasValidHealthResult;
   if (isSyncingFirstTime) {
     return (
       <div className="mx-auto max-w-[1440px] px-6 py-10 space-y-6 animate-pulse">
@@ -452,7 +463,12 @@ function Dashboard() {
       {bootstrapError && (
         <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold rounded-xl flex items-center justify-between gap-4">
           <span>{bootstrapError}</span>
-          <Button size="sm" variant="outline" className="border-red-500/30 hover:bg-red-500/10 text-red-500 font-bold" onClick={handleRetry}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-red-500/30 hover:bg-red-500/10 text-red-500 font-bold"
+            onClick={handleRetry}
+          >
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Retry
           </Button>
         </div>

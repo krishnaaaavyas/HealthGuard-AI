@@ -16,6 +16,7 @@ import { PredictionService } from "./services/prediction.service.js";
 import { BehaviorService } from "./services/behavior.service.js";
 import { MlRiskService } from "./services/mlRisk.service.js";
 import expertReviewRoutes from "./routes/expertReview.routes.js";
+import v2Routes from "./routes/v2.routes.js";
 
 dotenv.config();
 
@@ -28,6 +29,9 @@ app.use(express.json());
 
 // Mount Expert Review Routes
 app.use("/api/expert-review", expertReviewRoutes);
+
+// Mount V2 Versioned Routes
+app.use("/api/v2", v2Routes);
 
 // Zod schema for profile validation
 const ProfileSchema = z.object({
@@ -139,22 +143,40 @@ app.get("/api/dashboard/bootstrap", requireAuth, async (req: AuthenticatedReques
   try {
     // Execute Firestore queries in parallel
     const [profileSnap, userSnap, expertReviewSnap, coachNudgeSnap] = await Promise.all([
-      db.collection("profiles").doc(uid).get().catch((err: any) => {
-        console.error("Bootstrap: error fetching profile:", err);
-        return { exists: false, data: () => null };
-      }),
-      db.collection("users").doc(uid).get().catch((err: any) => {
-        console.error("Bootstrap: error fetching user:", err);
-        return { exists: false, data: () => null };
-      }),
-      db.collection("expertReviewRequests").where("userId", "==", uid).get().catch((err: any) => {
-        console.error("Bootstrap: error fetching expert reviews:", err);
-        return { empty: true, docs: [] };
-      }),
-      db.collection("coachingNudges").where("userId", "==", uid).orderBy("createdAt", "desc").limit(1).get().catch((err: any) => {
-        console.error("Bootstrap: error fetching coaching nudges:", err);
-        return { empty: true, docs: [] };
-      })
+      db
+        .collection("profiles")
+        .doc(uid)
+        .get()
+        .catch((err: any) => {
+          console.error("Bootstrap: error fetching profile:", err);
+          return { exists: false, data: () => null };
+        }),
+      db
+        .collection("users")
+        .doc(uid)
+        .get()
+        .catch((err: any) => {
+          console.error("Bootstrap: error fetching user:", err);
+          return { exists: false, data: () => null };
+        }),
+      db
+        .collection("expertReviewRequests")
+        .where("userId", "==", uid)
+        .get()
+        .catch((err: any) => {
+          console.error("Bootstrap: error fetching expert reviews:", err);
+          return { empty: true, docs: [] };
+        }),
+      db
+        .collection("coachingNudges")
+        .where("userId", "==", uid)
+        .orderBy("createdAt", "desc")
+        .limit(1)
+        .get()
+        .catch((err: any) => {
+          console.error("Bootstrap: error fetching coaching nudges:", err);
+          return { empty: true, docs: [] };
+        }),
     ]);
 
     const profileData = profileSnap.exists ? profileSnap.data() : null;
@@ -281,19 +303,21 @@ app.get("/api/dashboard/bootstrap", requireAuth, async (req: AuthenticatedReques
 
     const responsePayload = {
       success: true,
-      profile: profileData ? {
-        age: profileData.age,
-        gender: profileData.gender,
-        heightCm: profileData.heightCm || profileData.height,
-        weightKg: profileData.weightKg || profileData.weight,
-        smoking: profileData.smoking,
-        exercise: profileData.exercise || profileData.exerciseLevel,
-        familyHistory: profileData.familyHistory,
-        symptoms: profileData.symptoms,
-        alcohol: profileData.alcohol || undefined,
-        diseases: profileData.diseases || undefined,
-        language: profileData.language || "en",
-      } : null,
+      profile: profileData
+        ? {
+            age: profileData.age,
+            gender: profileData.gender,
+            heightCm: profileData.heightCm || profileData.height,
+            weightKg: profileData.weightKg || profileData.weight,
+            smoking: profileData.smoking,
+            exercise: profileData.exercise || profileData.exerciseLevel,
+            familyHistory: profileData.familyHistory,
+            symptoms: profileData.symptoms,
+            alcohol: profileData.alcohol || undefined,
+            diseases: profileData.diseases || undefined,
+            language: profileData.language || "en",
+          }
+        : null,
       result: profileData?.result || null,
       history: historyList,
       userStatus: userStatusObj,
@@ -658,7 +682,7 @@ app.post("/api/risk/calculate", requireAuth, async (req: AuthenticatedRequest, r
         diabetes: analysis.diabetesRisk.risk,
         heart: analysis.heartRisk.risk,
         hypertension: analysis.hypertensionRisk.risk,
-      }
+      },
     );
 
     // Merge deterministic rationales and plans into analysis

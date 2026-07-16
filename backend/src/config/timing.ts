@@ -25,7 +25,9 @@ export const endMeasure = (name: string) => {
         performance.clearMarks(startMark);
         performance.clearMarks(endMark);
         performance.clearMeasures(name);
-      } catch (_) {}
+      } catch (_) {
+        // Ignored
+      }
     }
   }
 };
