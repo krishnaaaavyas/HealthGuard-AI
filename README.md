@@ -99,20 +99,24 @@ HealthGuard AI is a modern, patient-first web application designed to help indiv
 HealthGuard AI features a premium, production-grade performance architecture engineered to ensure a sub-second Time-to-Interactive (TTI) and bulletproof offline resilience:
 
 ### 1. Local-First Architecture (`PendingSyncQueue`)
+
 - **Instant Flow**: Submitting the health assessment calculates risk metrics locally, updates UI context, and redirects the user to the dashboard instantly.
 - **Background Pipeline**: Profile synchronizations, Firestore writes, and AI advice generation run concurrently in the background using `profileSyncService`.
 - **Offline Recovery**: If network connection is lost, updates are held in `hg.pending-sync.v1` and automatically synchronized when the browser detects a restore of internet connectivity (`online` events).
 
 ### 2. Consolidated Dashboard Bootstrap Endpoint
+
 - **Unified Query**: Replaced 5 sequential REST calls with a single consolidated `GET /api/dashboard/bootstrap` endpoint.
 - **Concurrent Execution**: Queries user state, expert reviews, and nudges in parallel via `Promise.all`.
 - **Dynamic Calculation**: Attributes risk drivers and ranks action priorities on-the-fly, completely bypassing Gemini API dependencies for initial dashboard load.
 
 ### 3. Decoupled AI Pipeline & Hashing Cache
+
 - **Decoupled API**: Clinical calculation (`POST /api/risk/calculate`) is separated from AI guidance (`POST /api/risk/advice`), allowing the app to respond in under 100ms.
 - **Snapshot Cache**: Generates a 64-bit payload hash for the profile state. If the profile has not changed, the app retrieves the cached clinical recommendation from Firestore in under 200ms, saving Gemini API resources.
 
 ### 4. Advanced Bundle Optimization & Route Splitting
+
 - **Route-level Chunking**: Split all main views (Dashboard, Scanner, Progress, Expert Review, Assessment, Report) into dynamically imported TanStack Router lazy routes (`.lazy.tsx` files).
 - **On-Demand Imports**: Dynamically loads heavy modules like `jsPDF` only when the user clicks "Download Report".
 - **Result**: Reduced the initial JS bundle payload size from **2.3 MB** to **586 kB** (a 75% reduction).
@@ -330,7 +334,7 @@ npm start        # Run production server
 
 ---
 
-## 🗺️ Development Phases
+## 🗺️ Development Phases (V1 Baseline)
 
 | Phase        | Description                                                | Status      |
 | ------------ | ---------------------------------------------------------- | ----------- |
@@ -345,6 +349,32 @@ npm start        # Run production server
 | **Phase 9**  | UX Cleanup (dashboard focus + sidebar simplification)      | ✅ Complete |
 | **Phase 10** | Expert Review (human clinical review + real-time chat)     | ✅ Complete |
 | **Phase 11** | Guided Onboarding (one-time assessment + smart redirects)  | ✅ Complete |
+
+---
+
+## 🚀 HealthGuard AI V2 Roadmap
+
+HealthGuard V2 introduces an advanced health-intelligence system supporting detailed biomarker screening, laboratory reports parsing, and localized regional contexts.
+
+### V2 Phases
+- **Phase 0: Baseline, Safety Net & Compatibility** | **Status: ✅ Complete**
+- **Phase 1: Lab Reports OCR & Biomarker Parsing** | Status: 📅 Scheduled
+- **Phase 2: ML-Powered Cardiovascular Risk Models** | Status: 📅 Scheduled
+- **Phase 3: Localized Regional Context Engine** | Status: 📅 Scheduled
+
+### Feature-Flag Configurations
+All V2 capabilities reside behind environment variables and are disabled by default:
+- **Frontend (`.env`)**: `VITE_ENABLE_HEALTH_ENGINE_V2=false`
+- **Backend (`backend/.env`)**: `HEALTH_ENGINE_V2_ENABLED=false`
+
+To enable V2 features for testing, change their values to `true` in your local environment files.
+
+### V2 Documentation References
+- [V2 Architecture Design](file:///c:/Users/admin/Documents/Hackathons%20ig/HealthGuard%20AI/docs/architecture-v2.md)
+- [V2 Testing & Baseline Verification](file:///c:/Users/admin/Documents/Hackathons%20ig/HealthGuard%20AI/docs/testing.md)
+- [V2 Rollback Procedures & Legacy Verification](file:///c:/Users/admin/Documents/Hackathons%20ig/HealthGuard%20AI/docs/rollback-v2.md)
+- [V2 Data Models](file:///c:/Users/admin/Documents/Hackathons%20ig/HealthGuard%20AI/docs/data-model-v2.md)
+- [V2 API Specifications](file:///c:/Users/admin/Documents/Hackathons%20ig/HealthGuard%20AI/docs/api-v2.md)
 
 ---
 

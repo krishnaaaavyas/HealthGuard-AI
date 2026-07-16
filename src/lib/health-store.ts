@@ -16,9 +16,15 @@ export type Profile = {
   exercise: "none" | "light" | "moderate" | "active";
   familyHistory: string;
   symptoms: string;
+  schemaVersion?: number;
+  engineVersion?: string;
 };
 
-export type StoredResult = HealthResult & { bmi: number };
+export type StoredResult = HealthResult & {
+  bmi: number;
+  schemaVersion?: number;
+  engineVersion?: string;
+};
 
 export type HistoryEntry = {
   date: string;
@@ -26,13 +32,54 @@ export type HistoryEntry = {
   bmi: number;
   weightKg: number;
   risks: { diabetes: number; heartDisease: number; hypertension: number };
+  schemaVersion?: number;
+  engineVersion?: string;
 };
+
+export function readProfileCompatibility(raw: any): Profile | null {
+  if (!raw) return null;
+  return {
+    ...raw,
+    schemaVersion: raw.schemaVersion ?? 1,
+    engineVersion: raw.engineVersion ?? "legacy",
+  };
+}
+
+export function readStoredResultCompatibility(raw: any): StoredResult | null {
+  if (!raw) return null;
+  return {
+    ...raw,
+    schemaVersion: raw.schemaVersion ?? 1,
+    engineVersion: raw.engineVersion ?? "legacy",
+  };
+}
+
+export function readHistoryEntryCompatibility(raw: any): HistoryEntry {
+  return {
+    ...raw,
+    schemaVersion: raw.schemaVersion ?? 1,
+    engineVersion: raw.engineVersion ?? "legacy",
+  };
+}
 
 function read<T>(key: string): T | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+
+    if (key === KEY_PROFILE) {
+      return readProfileCompatibility(parsed) as unknown as T;
+    }
+    if (key === KEY_RESULT) {
+      return readStoredResultCompatibility(parsed) as unknown as T;
+    }
+    if (key === KEY_HISTORY && Array.isArray(parsed)) {
+      return parsed.map(readHistoryEntryCompatibility) as unknown as T;
+    }
+
+    return parsed as T;
   } catch {
     return null;
   }

@@ -4,10 +4,17 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export class ApiError extends Error {
   constructor(
-    public type: "network" | "cold_start" | "unauthorized" | "timeout" | "server" | "validation" | "unknown",
+    public type:
+      | "network"
+      | "cold_start"
+      | "unauthorized"
+      | "timeout"
+      | "server"
+      | "validation"
+      | "unknown",
     message: string,
     public status?: number,
-    public details?: any
+    public details?: any,
   ) {
     super(message);
     this.name = "ApiError";
@@ -61,7 +68,9 @@ export const apiClient = {
 
           if (isRetryable && !options?.skipRetry) {
             const backoffMs = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
-            console.warn(`[ApiClient] Request failed (attempt ${attempt}/${maxRetries + 1}). Retrying in ${backoffMs}ms... Error: ${error.message}`);
+            console.warn(
+              `[ApiClient] Request failed (attempt ${attempt}/${maxRetries + 1}). Retrying in ${backoffMs}ms... Error: ${error.message}`,
+            );
             await wait(backoffMs);
             continue;
           }
@@ -101,7 +110,8 @@ export const apiClient = {
 
     // 2. Abort Controller & Custom Timeout
     const controller = new AbortController();
-    const timeoutMs = options?.timeoutMs || (options?.method === "GET" || !options?.method ? 15000 : 25000);
+    const timeoutMs =
+      options?.timeoutMs || (options?.method === "GET" || !options?.method ? 15000 : 25000);
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const mergedOptions: RequestInit = {
@@ -116,19 +126,28 @@ export const apiClient = {
       clearTimeout(timeoutId);
 
       const duration = Date.now() - startTime;
-      
+
       if (duration > 15000) {
-        console.log(`[ApiClient] Cold start detected but completed successfully, call took ${duration}ms`);
+        console.log(
+          `[ApiClient] Cold start detected but completed successfully, call took ${duration}ms`,
+        );
       }
 
       if (!response.ok) {
         let details: any = null;
         try {
           details = await response.json();
-        } catch (_) {}
+        } catch (_) {
+          // Ignored
+        }
 
         if (response.status === 401 || response.status === 403) {
-          throw new ApiError("unauthorized", "Session unauthorized or expired", response.status, details);
+          throw new ApiError(
+            "unauthorized",
+            "Session unauthorized or expired",
+            response.status,
+            details,
+          );
         }
         if (response.status >= 500) {
           throw new ApiError("server", "Internal server error occurred", response.status, details);
@@ -136,7 +155,12 @@ export const apiClient = {
         if (response.status === 400) {
           throw new ApiError("validation", "Validation error occurred", response.status, details);
         }
-        throw new ApiError("unknown", `Request failed with status ${response.status}`, response.status, details);
+        throw new ApiError(
+          "unknown",
+          `Request failed with status ${response.status}`,
+          response.status,
+          details,
+        );
       }
 
       return (await response.json()) as T;
@@ -159,7 +183,7 @@ export const apiClient = {
       if (isColdStartPotential) {
         throw new ApiError(
           "cold_start",
-          "The health service is starting. Your dashboard will load shortly."
+          "The health service is starting. Your dashboard will load shortly.",
         );
       }
 

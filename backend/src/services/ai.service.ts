@@ -77,7 +77,11 @@ export class AIService {
   /**
    * Helper to make raw fetch requests to Gemini API
    */
-  private static async callGemini(prompt: string, responseSchema?: any, timeoutMs = 20000): Promise<string> {
+  private static async callGemini(
+    prompt: string,
+    responseSchema?: any,
+    timeoutMs = 20000,
+  ): Promise<string> {
     const key = this.getApiKey();
     if (!key) {
       throw new Error("Gemini API key is not configured.");

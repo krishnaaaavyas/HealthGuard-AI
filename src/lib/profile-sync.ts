@@ -36,7 +36,7 @@ export const profileSyncService = {
    */
   queueProfileSync(profile: any, result: any, history: any) {
     const uid = auth.currentUser?.uid || "";
-    
+
     // Assemble complete payload
     const payload = {
       ...profile,
@@ -192,7 +192,7 @@ export const profileSyncService = {
       // Calculate exponential backoff (e.g. 5s, 10s, 20s, up to 60s max)
       const backoffMs = Math.min(5000 * Math.pow(2, pending.attempts - 1), 60000);
       console.log(`[ProfileSync] Retrying synchronization in ${backoffMs}ms...`);
-      
+
       if (syncTimeout) clearTimeout(syncTimeout);
       syncTimeout = setTimeout(() => {
         this.triggerSync();
@@ -207,7 +207,7 @@ if (typeof window !== "undefined") {
     console.log("[ProfileSync] Internet connection detected. Triggering recovery sync.");
     profileSyncService.triggerSync();
   });
-  
+
   // Register initial trigger when application loads
   window.addEventListener("load", () => {
     profileSyncService.triggerSync();
