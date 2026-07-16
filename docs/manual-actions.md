@@ -29,3 +29,13 @@ Ensure all V2 localized strings and diet terminology are verified by regional la
 - English (EN)
 - Hindi (HI)
 - Gujarati (GU)
+
+---
+
+## 4. Phase 0 Production Verification Checks
+Before performing any schema migrations or schema deployments on the production environment, the database administrator must manually verify:
+- [ ] **Confirm production Firebase project**: Ensure the active CLI workspace matches the correct production project.
+- [ ] **Confirm current Firestore backup strategy**: Verify automated backup schedules are active under Google Cloud console.
+- [ ] **Confirm current Render environment variables**: Double-check backend Render variables check.
+- [ ] **Confirm current Vercel environment variables**: Double-check frontend Vercel variables check.
+- [ ] **Create a database backup before later schema work**: Run a manual Firestore backup partition export before starting database modifications in later phases.

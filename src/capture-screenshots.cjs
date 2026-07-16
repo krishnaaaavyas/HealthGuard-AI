@@ -23,10 +23,16 @@ async function runCapture() {
 
   // Wait for dev server to boot
   await new Promise((resolve) => {
+    const fallbackTimeout = setTimeout(() => {
+      console.log("Vite boot check timed out; continuing via fallback safety...");
+      resolve();
+    }, 8000);
+
     viteProcess.stdout.on("data", (data) => {
       const output = data.toString();
       console.log("[Vite]", output.trim());
       if (output.includes("Local:") || output.includes("localhost:5173")) {
+        clearTimeout(fallbackTimeout);
         resolve();
       }
     });
@@ -68,12 +74,14 @@ async function runCapture() {
 
     // Start E2E Registration and Wizard Onboarding
     console.log("Filling E2E registration form...");
-    const testEmail = `baseline-user-${Date.now()}@healthguard-ai.mock`;
+    const testEmail = `baseline-user-${Date.now()}@gmail.com`;
     const testPassword = "TestPassword123!";
 
-    await page.fill('input[type="email"]', testEmail);
-    await page.fill('input[type="password"]', testPassword);
-    
+    await page.fill('input#name', "Test Patient");
+    await page.fill('input#email', testEmail);
+    await page.fill('input#password', testPassword);
+    await page.fill('input#confirmPassword', testPassword);
+
     console.log("Submitting registration...");
     await page.click('button[type="submit"]');
 
@@ -88,59 +96,40 @@ async function runCapture() {
     console.log("Capturing Assessment Step 1...");
     await page.screenshot({ path: stepScreenshotPath(1), fullPage: true });
 
-    // Fill Step 1
-    console.log("Filling Step 1...");
-    await page.fill('input[name="age"]', "35");
-    
-    // Select gender option via select component or fallback
-    const genderSelect = await page.$("button:has-text('Select gender')");
-    if (genderSelect) {
-      await genderSelect.click();
-      await page.click('span:has-text("Male")');
-    } else {
-      await page.selectOption('select[name="gender"]', "male");
-    }
-
-    await page.fill('input[name="heightCm"]', "175");
-    await page.fill('input[name="weightKg"]', "75");
-    await page.click("button:has-text('Next')");
+    // Click Continue (Step 1 is pre-populated with valid defaults)
+    console.log("Submitting Step 1...");
+    await page.click("button:has-text('Continue')");
     await page.waitForTimeout(1000);
 
-    // Fill Step 2
-    console.log("Capturing and Filling Step 2...");
+    // Step 2
+    console.log("Capturing Assessment Step 2...");
     await page.screenshot({ path: stepScreenshotPath(2), fullPage: true });
-    const smokingSelect = await page.$("button:has-text('Select smoking')");
-    if (smokingSelect) {
-      await smokingSelect.click();
-      await page.click('span:has-text("Never smoked")');
-    }
-    const exerciseSelect = await page.$("button:has-text('Select active')");
-    if (exerciseSelect) {
-      await exerciseSelect.click();
-      await page.click('span:has-text("Moderate")');
-    }
-    await page.click("button:has-text('Next')");
+    console.log("Submitting Step 2...");
+    await page.click("button:has-text('Continue')");
     await page.waitForTimeout(1000);
 
-    // Fill Step 3
-    console.log("Capturing and Filling Step 3...");
+    // Step 3
+    console.log("Capturing Assessment Step 3...");
     await page.screenshot({ path: stepScreenshotPath(3), fullPage: true });
+    console.log("Filling and Submitting Step 3...");
     await page.fill('textarea[name="familyHistory"]', "No family history of heart issues.");
-    await page.click("button:has-text('Next')");
+    await page.click("button:has-text('Continue')");
     await page.waitForTimeout(1000);
 
-    // Fill Step 4
-    console.log("Capturing and Submitting Step 4...");
+    // Step 4
+    console.log("Capturing Assessment Step 4...");
     await page.screenshot({ path: stepScreenshotPath(4), fullPage: true });
+    console.log("Filling and Submitting Step 4...");
     await page.fill('textarea[name="symptoms"]', "None");
     
     console.log("Submitting wizard assessment...");
-    await page.click("button:has-text('Complete')");
+    // The button on Step 4 has text containing "Generate Plan"
+    await page.click("button:has-text('Generate')");
 
     // Wait for redirection to dashboard
     console.log("Waiting for dashboard redirect...");
     await page.waitForURL("**/dashboard**", { timeout: 15000 });
-    await page.waitForTimeout(3000); // Allow charts/results to fetch and animate
+    await page.waitForTimeout(4000); // Allow charts/results to fetch and animate
 
     // Capture Dashboard
     console.log("Capturing Dashboard...");
