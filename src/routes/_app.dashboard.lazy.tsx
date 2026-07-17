@@ -2,7 +2,6 @@ import { createLazyFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { useHealthResult, useProfile, useHistory } from "@/lib/health-store";
 import { useLanguage, tr } from "@/lib/i18n";
-import { getFeatureFlags } from "@/lib/feature-flags";
 import { auth, db, isConfigured } from "@/lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { useAuth } from "@/contexts/auth-context";
@@ -708,33 +707,15 @@ function Dashboard() {
                   { name: "Hypertension", value: result.risk.hypertension },
                 ].map((r) => {
                   const c = colorFor(r.value);
-                  const isDiabetes = r.name === "Diabetes";
-                  const showV2 =
-                    isDiabetes &&
-                    getFeatureFlags().enableHealthEngineV2 &&
-                    result &&
-                    (result as any).moduleResults;
-                  const diabetesV2 = showV2
-                    ? (result as any).moduleResults.find((m: any) => m.moduleId === "diabetes")
-                    : null;
-
                   return (
-                    <div
-                      key={r.name}
-                      className="space-y-1.5 border-b border-border/20 pb-3 last:border-0 last:pb-0"
-                    >
-                      <div className="flex justify-between items-center text-xs font-semibold">
-                        <span className="text-muted-foreground flex items-center gap-1.5">
-                          {isDiabetes
+                    <div key={r.name} className="space-y-1">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-muted-foreground">
+                          {r.name === "Diabetes"
                             ? tr("diabetes", currentLang)
                             : r.name === "Heart Disease"
                               ? tr("heartDisease", currentLang)
                               : tr("hypertension", currentLang)}
-                          {showV2 && (
-                            <span className="text-[9px] bg-teal/10 text-teal px-1.5 py-0.5 rounded-full border border-teal/20">
-                              V2
-                            </span>
-                          )}
                         </span>
                         <span style={{ color: c }}>{r.value}%</span>
                       </div>
@@ -744,157 +725,10 @@ function Dashboard() {
                           style={{ width: `${r.value}%`, backgroundColor: c }}
                         />
                       </div>
-
-                      {showV2 && diabetesV2 && (
-                        <div className="mt-2.5 p-3 rounded-xl border border-border bg-surface-muted/30 space-y-2 text-left">
-                          {/* Evidence Completeness Status */}
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className="text-muted-foreground font-mono font-medium">
-                              {tr("evidenceCompleteness", currentLang)}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className={`text-[9px] font-bold px-1.5 py-0 rounded ${
-                                diabetesV2.evidenceCompleteness === 1.0
-                                  ? "bg-green-500/10 text-green-500 border-green-500/20"
-                                  : diabetesV2.evidenceCompleteness === 0.75
-                                    ? "bg-teal-500/10 text-teal-500 border-teal-500/20"
-                                    : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                              }`}
-                            >
-                              {diabetesV2.evidenceCompleteness === 1.0
-                                ? tr("verifiedHba1c", currentLang)
-                                : diabetesV2.evidenceCompleteness === 0.75
-                                  ? tr("glucoseCompleted", currentLang)
-                                  : tr("lifestyleOnly", currentLang)}
-                            </Badge>
-                          </div>
-
-                          {/* Model Version */}
-                          <div className="flex items-center justify-between text-[10px] text-muted-foreground border-b border-border/20 pb-1.5">
-                            <span>{tr("modelversion", currentLang)}</span>
-                            <span className="font-mono">{diabetesV2.moduleVersion}</span>
-                          </div>
-
-                          {/* Staging warning if unavailable */}
-                          {diabetesV2.status === "unavailable" && (
-                            <div className="p-2 bg-amber-500/10 border border-amber-500/20 text-amber-600 text-[10px] rounded-lg font-medium leading-normal">
-                              ⚠ Model in clinical staging (unavailable). Using legacy V1 fallback.
-                            </div>
-                          )}
-
-                          {/* Explainability factors */}
-                          {diabetesV2.topContributors && diabetesV2.topContributors.length > 0 && (
-                            <div className="space-y-1">
-                              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider font-mono">
-                                {tr("increasingFactors", currentLang)}
-                              </div>
-                              <ul className="list-disc list-inside text-[10px] text-foreground/80 space-y-0.5 pl-1 leading-normal">
-                                {diabetesV2.topContributors.map((factor: any) => (
-                                  <li key={factor.factorId}>{factor.description || factor.name}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {diabetesV2.protectiveFactors &&
-                            diabetesV2.protectiveFactors.length > 0 && (
-                              <div className="space-y-1 pt-1">
-                                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider font-mono">
-                                  {tr("protectiveFactors", currentLang)}
-                                </div>
-                                <ul className="list-disc list-inside text-[10px] text-foreground/80 space-y-0.5 pl-1 leading-normal">
-                                  {diabetesV2.protectiveFactors.map((factor: any) => (
-                                    <li key={factor.factorId}>
-                                      {factor.description || factor.name}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                          {diabetesV2.missingInputs && diabetesV2.missingInputs.length > 0 && (
-                            <div className="space-y-1 pt-1 border-t border-border/20">
-                              <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider font-mono">
-                                {tr("missingEvidence", currentLang)}
-                              </div>
-                              <div className="text-[10px] text-muted-foreground">
-                                {diabetesV2.missingInputs.join(", ")}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Disclaimer */}
-                          <div className="text-[9px] text-muted-foreground leading-normal border-t border-border/30 pt-1.5 italic">
-                            {tr("medDisclaimerV2", currentLang)}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
               </div>
-
-              {result.mlRisk && (
-                <div className="mt-6 border-t border-border/40 pt-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono flex items-center gap-1.5">
-                      <Brain className="h-3.5 w-3.5 text-teal animate-pulse-slow" />
-                      {tr("mlRiskCategory", currentLang) || "ML Risk Category"}
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono ${
-                        result.mlRisk.mlRiskCategory === "high"
-                          ? "bg-red-500/10 text-red-500 border-red-500/20"
-                          : result.mlRisk.mlRiskCategory === "moderate"
-                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                            : "bg-green-500/10 text-green-500 border-green-500/20"
-                      }`}
-                    >
-                      {result.mlRisk.mlRiskCategory.toUpperCase()}
-                    </Badge>
-                  </div>
-                  <div className="text-[11px] text-muted-foreground flex items-center justify-between">
-                    <span>
-                      {tr("modelVersion", currentLang) || "Model:"} {result.mlRisk.modelVersion}
-                    </span>
-                    <span>
-                      {tr("confidence", currentLang) || "Confidence:"}{" "}
-                      {(() => {
-                        const rawConf = result.mlRisk.confidence;
-                        return rawConf <= 1 ? Math.round(rawConf * 100) : Math.round(rawConf);
-                      })()}
-                      %
-                    </span>
-                  </div>
-                  {result.mlRisk.explanation && (
-                    <p className="text-xs text-muted-foreground leading-normal mt-1 text-left">
-                      {result.mlRisk.explanation}
-                    </p>
-                  )}
-                  {result.mlRisk.supportingFactors &&
-                    result.mlRisk.supportingFactors.length > 0 && (
-                      <div className="text-[11px] font-medium text-foreground bg-accent/20 rounded-lg p-2.5 space-y-1 border border-border/40">
-                        <div className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider font-mono">
-                          {tr("supportingInsights", currentLang) || "Top Signals"}
-                        </div>
-                        <ul className="list-disc pl-3.5 space-y-1 text-left">
-                          {result.mlRisk.supportingFactors
-                            .slice(0, 2)
-                            .map((factor: string, idx: number) => (
-                              <li key={idx} className="leading-snug">
-                                {factor}
-                              </li>
-                            ))}
-                        </ul>
-                      </div>
-                    )}
-                  <p className="text-[9px] text-muted-foreground italic leading-normal pt-1 text-left">
-                    {tr("mlDisclaimer", currentLang)}
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
 

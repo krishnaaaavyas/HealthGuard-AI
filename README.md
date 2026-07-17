@@ -94,6 +94,23 @@ HealthGuard AI is a modern, patient-first web application designed to help indiv
 
 ---
 
+## 🧪 V1 Production Architecture & V2 ML Pipeline Isolation
+
+To preserve the stability of the core MVP while enabling ongoing development of the machine learning features, HealthGuard AI is split into two isolated runtime contexts:
+
+1. **Stable V1 Core (Production)**
+   - **Calculations**: Relies strictly on standard deterministic equations: **FINDRISC** for Diabetes risk and **Framingham** for CVD/Hypertension.
+   - **Gemini Prompts**: Fully isolated from experimental indicators, focusing purely on validated biometric inputs.
+   - **UI Rendering**: The dashboard is devoid of all ML components, model confidence badges, and experimental risk card indicators.
+   - **Heuristics**: Deterministic scoring logic is cleanly isolated to `backend/src/experimental/experimentalRiskHeuristic.service.ts` to prevent mislabeling as machine learning models.
+
+2. **Experimental V2 ML Pipeline (Isolated)**
+   - **Namespace**: Available strictly under `/api/v2/*` routes.
+   - **Default State**: Disabled by default (`HEALTH_ENGINE_V2_ENABLED=false`), returning a controlled service-disabled error structure.
+   - **Python microservice**: An independent FastAPI service located under `health-intelligence/` running on port 8000 for training, model registry, and ML inferences.
+
+---
+
 ## ⚡ Performance Optimization & Local-First Architecture
 
 HealthGuard AI features a premium, production-grade performance architecture engineered to ensure a sub-second Time-to-Interactive (TTI) and bulletproof offline resilience:

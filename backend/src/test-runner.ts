@@ -1,5 +1,5 @@
 import { RiskService } from "./services/risk.service.js";
-import { MlRiskService } from "./services/mlRisk.service.js";
+import { ExperimentalRiskHeuristicService } from "./experimental/experimentalRiskHeuristic.service.js";
 import { FoodImpactService } from "./services/foodImpact.service.js";
 import { PredictionService } from "./services/prediction.service.js";
 
@@ -56,47 +56,47 @@ async function runTestRunner() {
     diseases: "None",
   };
 
-  console.log("\n--- PHASE 1: ML RISK CLASSIFICATION ENGINE ---");
+  console.log("\n--- PHASE 1: EXPERIMENTAL RISK HEURISTIC ENGINE ---");
 
   const clinicalA = RiskService.analyze(profileA);
-  const mlA = MlRiskService.classifyMlRisk(profileA, clinicalA);
+  const mlA = ExperimentalRiskHeuristicService.classifyRisk(profileA, clinicalA);
   console.log(
     "Profile A (Clinical Overall Risk):",
     clinicalA.overallRisk,
     `(${clinicalA.overallRiskLabel})`,
   );
   console.log(
-    "Profile A (ML Risk Category):   ",
-    mlA.mlRiskCategory,
-    `(Confidence: ${mlA.confidence}%, Version: ${mlA.modelVersion})`,
+    "Profile A (Heuristic Risk Category):",
+    mlA.riskCategory,
+    `(Confidence: ${mlA.confidence}%, Version: ${mlA.version})`,
   );
   console.log("Profile A (Supporting Factors): ", mlA.supportingFactors);
 
   const clinicalB = RiskService.analyze(profileB);
-  const mlB = MlRiskService.classifyMlRisk(profileB, clinicalB);
+  const mlB = ExperimentalRiskHeuristicService.classifyRisk(profileB, clinicalB);
   console.log(
     "\nProfile B (Clinical Overall Risk):",
     clinicalB.overallRisk,
     `(${clinicalB.overallRiskLabel})`,
   );
   console.log(
-    "Profile B (ML Risk Category):   ",
-    mlB.mlRiskCategory,
-    `(Confidence: ${mlB.confidence}%, Version: ${mlB.modelVersion})`,
+    "Profile B (Heuristic Risk Category):",
+    mlB.riskCategory,
+    `(Confidence: ${mlB.confidence}%, Version: ${mlB.version})`,
   );
   console.log("Profile B (Supporting Factors): ", mlB.supportingFactors);
 
   const clinicalC = RiskService.analyze(profileC);
-  const mlC = MlRiskService.classifyMlRisk(profileC, clinicalC);
+  const mlC = ExperimentalRiskHeuristicService.classifyRisk(profileC, clinicalC);
   console.log(
     "\nProfile C (Clinical Overall Risk):",
     clinicalC.overallRisk,
     `(${clinicalC.overallRiskLabel})`,
   );
   console.log(
-    "Profile C (ML Risk Category):   ",
-    mlC.mlRiskCategory,
-    `(Confidence: ${mlC.confidence}%, Version: ${mlC.modelVersion})`,
+    "Profile C (Heuristic Risk Category):",
+    mlC.riskCategory,
+    `(Confidence: ${mlC.confidence}%, Version: ${mlC.version})`,
   );
   console.log("Profile C (Supporting Factors): ", mlC.supportingFactors);
 

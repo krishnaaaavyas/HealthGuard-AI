@@ -241,10 +241,7 @@ export class AIService {
       .map((td) => `- ${td.factor} (${td.contribution}% contribution)`)
       .join("\n");
 
-    let mlContext = "";
-    if (mlRisk) {
-      mlContext = `\n\nSupporting Machine Learning Risk Classification:\n- ML Risk Category: ${mlRisk.mlRiskCategory}\n- Confidence: ${mlRisk.confidence}%\n- Supporting Factors: ${mlRisk.supportingFactors?.join(", ") || "None"}\n- Model Version: ${mlRisk.modelVersion}\n\nPlease incorporate a brief explanation of how this ML classification aligns with or complements the clinical metrics (explain this alignment as part of the rationale for the overall risk description, without recalculating any disease risk).`;
-    }
+    const mlContext = "";
 
     const targetLang = langName[profile.language] || "English";
     const prompt = `You are a clinical wellness coach explaining health assessments.

@@ -57,6 +57,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 1. Listen to Auth changes
   useEffect(() => {
     if (!isConfigured) {
+      const storedMock = localStorage.getItem("hg.mock-user.v1");
+      if (storedMock) {
+        try {
+          setUser(JSON.parse(storedMock));
+          const completed = localStorage.getItem("hg.result.v1");
+          setHasCompletedAssessment(!!completed);
+        } catch {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
       setLoading(false);
       return;
     }
@@ -278,6 +290,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async () => {
     try {
       setLoading(true);
+      if (!isConfigured) {
+        const mockUser: any = {
+          uid: "guest-user-123",
+          email: "google-guest@healthguard-ai.mock",
+          displayName: "Google Guest",
+          photoURL: null,
+          providerData: [],
+          getIdToken: async () => "mock-uid-guest-user-123",
+        };
+        localStorage.setItem("hg.mock-user.v1", JSON.stringify(mockUser));
+        setUser(mockUser);
+        const completed = localStorage.getItem("hg.result.v1");
+        setHasCompletedAssessment(!!completed);
+        toast.success("Successfully signed in with Google (Mock Dev Mode)");
+        return;
+      }
       await signInWithPopup(auth, googleProvider);
       toast.success("Successfully signed in with Google");
     } catch (error: unknown) {
@@ -295,6 +323,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithEmail = async (email: string, pass: string) => {
     try {
       setLoading(true);
+      if (!isConfigured) {
+        const mockUser: any = {
+          uid: "guest-user-123",
+          email,
+          displayName: "Mock Patient",
+          photoURL: null,
+          providerData: [],
+          getIdToken: async () => "mock-uid-guest-user-123",
+        };
+        localStorage.setItem("hg.mock-user.v1", JSON.stringify(mockUser));
+        setUser(mockUser);
+        const completed = localStorage.getItem("hg.result.v1");
+        setHasCompletedAssessment(!!completed);
+        toast.success("Successfully signed in (Mock Dev Mode)");
+        return;
+      }
       await signInWithEmailAndPassword(auth, email, pass);
       toast.success("Successfully signed in");
     } catch (error: unknown) {
@@ -319,6 +363,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUpWithEmail = async (email: string, pass: string, name: string) => {
     try {
       setLoading(true);
+      if (!isConfigured) {
+        const mockUser: any = {
+          uid: "guest-user-123",
+          email,
+          displayName: name,
+          photoURL: null,
+          providerData: [],
+          getIdToken: async () => "mock-uid-guest-user-123",
+        };
+        localStorage.setItem("hg.mock-user.v1", JSON.stringify(mockUser));
+        setUser(mockUser);
+        setHasCompletedAssessment(false);
+        toast.success("Account created successfully (Mock Dev Mode)");
+        return;
+      }
       const credential = await createUserWithEmailAndPassword(auth, email, pass);
       await updateProfile(credential.user, { displayName: name });
 
@@ -399,6 +458,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setLoading(true);
+      if (!isConfigured) {
+        localStorage.removeItem("hg.mock-user.v1");
+        setUser(null);
+        setHasCompletedAssessment(null);
+        localStorage.removeItem("hg.profile.v1");
+        localStorage.removeItem("hg.result.v1");
+        localStorage.removeItem("hg.history.v1");
+        window.dispatchEvent(new CustomEvent("hg:store"));
+        toast.success("Successfully signed out (Mock Dev Mode)");
+        return;
+      }
       await signOut(auth);
       // Clear local storage and state for clinical assessment privacy
       localStorage.removeItem("hg.profile.v1");

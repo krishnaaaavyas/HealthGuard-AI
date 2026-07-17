@@ -14,13 +14,12 @@ import { RiskDriverService } from "./services/riskDriver.service.js";
 import { FoodImpactService } from "./services/foodImpact.service.js";
 import { PredictionService } from "./services/prediction.service.js";
 import { BehaviorService } from "./services/behavior.service.js";
-import { MlRiskService } from "./services/mlRisk.service.js";
 import expertReviewRoutes from "./routes/expertReview.routes.js";
 import v2Routes from "./routes/v2.routes.js";
 
 dotenv.config();
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Enable CORS and JSON body parsing
@@ -318,7 +317,12 @@ app.get("/api/dashboard/bootstrap", requireAuth, async (req: AuthenticatedReques
             language: profileData.language || "en",
           }
         : null,
-      result: profileData?.result || null,
+      result: profileData?.result
+        ? (() => {
+            const { mlRisk: _ignored, ...filtered } = profileData.result;
+            return filtered;
+          })()
+        : null,
       history: historyList,
       userStatus: userStatusObj,
       riskDrivers: riskDriversList,
@@ -396,7 +400,12 @@ app.get("/api/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
           diseases: data.diseases || undefined,
           language: data.language || "en",
         },
-        result: data.result || null,
+        result: data.result
+          ? (() => {
+              const { mlRisk: _ignored, ...filtered } = data.result;
+              return filtered;
+            })()
+          : null,
         history: historyList,
       });
     } else {
@@ -440,36 +449,6 @@ app.post("/api/profile", requireAuth, async (req: AuthenticatedRequest, res) => 
       diseases: data.diseases || null,
     });
 
-    // Calculate ML risk supporting category
-    let mlRisk: any = null;
-    try {
-      mlRisk = MlRiskService.classifyMlRisk(
-        {
-          age: data.age,
-          gender: data.gender,
-          heightCm: data.heightCm,
-          weightKg: data.weightKg,
-          smoking: data.smoking,
-          exercise: data.exercise,
-          familyHistory: data.familyHistory,
-          symptoms: data.symptoms,
-          alcohol: data.alcohol || null,
-          diseases: data.diseases || null,
-          language: data.language || "en",
-        },
-        analysis,
-      );
-    } catch (mlErr) {
-      console.error("ML risk calculation failed in profile save, fallback:", mlErr);
-      mlRisk = {
-        mlRiskCategory: "unknown",
-        confidence: 0,
-        supportingFactors: [],
-        modelVersion: "ml-risk-v1",
-        explanation: "ML risk classification is currently unavailable.",
-      };
-    }
-
     const updatedData: any = {
       age: data.age,
       gender: data.gender,
@@ -500,7 +479,6 @@ app.post("/api/profile", requireAuth, async (req: AuthenticatedRequest, res) => 
         factors: analysis.factors,
         actionPriorities: analysis.actionPriorities,
         bmi: analysis.bmi,
-        mlRisk: mlRisk || undefined,
       },
       updatedAt: new Date().toISOString(),
     };
@@ -634,36 +612,6 @@ app.post("/api/risk/calculate", requireAuth, async (req: AuthenticatedRequest, r
       diseases: data.diseases || null,
     });
 
-    // Calculate ML risk supporting category before generating plans
-    let mlRisk: any = null;
-    try {
-      mlRisk = MlRiskService.classifyMlRisk(
-        {
-          age: data.age,
-          gender: data.gender,
-          heightCm: data.heightCm,
-          weightKg: data.weightKg,
-          smoking: data.smoking,
-          exercise: data.exercise,
-          familyHistory: data.familyHistory,
-          symptoms: data.symptoms,
-          alcohol: data.alcohol || null,
-          diseases: data.diseases || null,
-          language: data.language || "en",
-        },
-        analysis,
-      );
-    } catch (mlErr) {
-      console.error("ML risk calculation failed in clinical risk calculate, fallback:", mlErr);
-      mlRisk = {
-        mlRiskCategory: "unknown",
-        confidence: 0,
-        supportingFactors: [],
-        modelVersion: "ml-risk-v1",
-        explanation: "ML risk classification is currently unavailable.",
-      };
-    }
-
     // Generate immediate deterministic fallback plans (extremely fast)
     const deterministic = RiskService.generateDeterministicPlans(
       {
@@ -716,7 +664,6 @@ app.post("/api/risk/calculate", requireAuth, async (req: AuthenticatedRequest, r
       overallRiskLabel: analysis.overallRiskLabel,
       factors: analysis.factors,
       actionPriorities: analysis.actionPriorities,
-      mlRisk: mlRisk || null,
       createdAt: new Date().toISOString(),
     };
     await assessmentRef.set(assessmentData);
@@ -753,7 +700,6 @@ app.post("/api/risk/calculate", requireAuth, async (req: AuthenticatedRequest, r
         factors: analysis.factors,
         actionPriorities: analysis.actionPriorities,
         bmi: analysis.bmi,
-        mlRisk: mlRisk || undefined,
         isAiEnriched: false, // Flag indicating AI enrichment is pending
       },
       updatedAt: new Date().toISOString(),
@@ -773,8 +719,6 @@ app.post("/api/risk/calculate", requireAuth, async (req: AuthenticatedRequest, r
       createdAt: new Date().toISOString(),
     });
 
-    // Attach mlRisk directly to the analysis response payload so it is returned to the client immediately
-    (analysis as any).mlRisk = mlRisk || null;
     (analysis as any).isAiEnriched = false;
 
     return res.json({
@@ -817,28 +761,6 @@ app.post("/api/risk/advice", requireAuth, async (req: AuthenticatedRequest, res)
       diseases: data.diseases || null,
     });
 
-    let mlRisk: any = null;
-    try {
-      mlRisk = MlRiskService.classifyMlRisk(
-        {
-          age: data.age,
-          gender: data.gender,
-          heightCm: data.heightCm,
-          weightKg: data.weightKg,
-          smoking: data.smoking,
-          exercise: data.exercise,
-          familyHistory: data.familyHistory,
-          symptoms: data.symptoms,
-          alcohol: data.alcohol || null,
-          diseases: data.diseases || null,
-          language: data.language || "en",
-        },
-        analysis,
-      );
-    } catch (mlErr) {
-      mlRisk = null;
-    }
-
     // Call AIService (which uses AbortController & 20s timeout)
     const enriched = await AIService.generateFullAdvice(
       uid,
@@ -860,7 +782,6 @@ app.post("/api/risk/advice", requireAuth, async (req: AuthenticatedRequest, res)
         heart: analysis.heartRisk.risk,
         hypertension: analysis.hypertensionRisk.risk,
       },
-      mlRisk,
     );
 
     // Save the enriched advice to the profile in Firestore
@@ -881,7 +802,6 @@ app.post("/api/risk/advice", requireAuth, async (req: AuthenticatedRequest, res)
         factors: analysis.factors,
         actionPriorities: analysis.actionPriorities,
         bmi: analysis.bmi,
-        mlRisk: mlRisk || undefined,
         isAiEnriched: true,
       },
       updatedAt: new Date().toISOString(),
@@ -2198,6 +2118,8 @@ app.get("/api/risk/drivers", requireAuth, async (req: AuthenticatedRequest, res)
 });
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`HealthGuard AI Express backend running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`HealthGuard AI Express backend running on http://localhost:${PORT}`);
+  });
+}
