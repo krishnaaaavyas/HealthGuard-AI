@@ -283,6 +283,21 @@ async function testV2Schemas() {
     process.env.HEALTH_ENGINE_V2_ENABLED = "true";
     process.env.FASTAPI_URL = "http://localhost:8000";
 
+    let fastApiAvailable = false;
+    try {
+      const ping = await fetch("http://localhost:8000/health", { signal: AbortSignal.timeout(1000) });
+      if (ping.status === 200) {
+        fastApiAvailable = true;
+      }
+    } catch {
+      // Offline
+    }
+
+    if (!fastApiAvailable) {
+      console.log("⚠️ FastAPI service is offline; skipping live inference router checks.");
+      return;
+    }
+
     const res = await fetch(`${baseUrl}/health-assessment`, {
       method: "POST",
       headers: {

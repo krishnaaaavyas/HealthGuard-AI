@@ -589,6 +589,25 @@ HealthGuard AI is open source and available under the MIT License.
 
 ---
 
+## Experimental Health Intelligence V2
+
+The V2 machine-learning pipeline is currently under development and is not connected to the production V1 user flow.
+
+The stable V1 MVP continues to use its existing risk-assessment and Gemini recommendation architecture.
+
+V2 code is isolated behind backend boundaries and disabled by default. No V2 result is shown to users or stored in V1 profile documents.
+
+### Key Architecture Boundaries:
+- **Feature Flags**:
+  - `HEALTH_ENGINE_V2_ENABLED=false` (Backend)
+  - `VITE_ENABLE_HEALTH_ENGINE_V2=false` (Frontend)
+- **FastAPI Python Service**:
+  - Located in `health-intelligence/`
+  - Runs on port 8000
+  - V1 backend calls it only if enabled via feature flags. Otherwise, it uses V1 clinical scoring.
+
+---
+
 ## 🎯 Future Roadmap
 
 - [ ] **Wearable Integration**: Sync with Fitbit, Apple Health, Google Fit
