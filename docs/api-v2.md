@@ -5,7 +5,9 @@ This document describes the API contract, request payloads, response bodies, and
 ---
 
 ## 1. Auth Guard requirement
+
 All endpoints under the `/api/v2/*` versioned path require a valid Firebase ID Token passed in the `Authorization` header:
+
 ```text
 Authorization: Bearer <Firebase_ID_Token>
 ```
@@ -15,6 +17,7 @@ Authorization: Bearer <Firebase_ID_Token>
 ## 2. API Endpoints
 
 ### 2.1 Health Assessment (`/api/v2/health-assessment`)
+
 Demographic, clinical, and physiological measurements.
 
 - **Method**: `POST`
@@ -54,10 +57,12 @@ Demographic, clinical, and physiological measurements.
 ---
 
 ### 2.2 Laboratory Reports (`/api/v2/lab-reports`)
+
 Uploaded report metrics and biomarker validation records.
 
 - **Method**: `POST`
 - **Request Payload Example**:
+
   ```json
   {
     "reportId": "rep_902341",
@@ -78,10 +83,12 @@ Uploaded report metrics and biomarker validation records.
 ---
 
 ### 2.3 Recommendations (`/api/v2/recommendations`)
+
 ML-derived disease specific risk and lifestyle advice routine.
 
 - **Method**: `POST`
 - **Request Payload Example**:
+
   ```json
   {
     "assessmentId": "uid_assessment_99",
@@ -113,10 +120,12 @@ ML-derived disease specific risk and lifestyle advice routine.
 ---
 
 ### 2.4 Regional Context (`/api/v2/regional-context`)
+
 Custom language preference, dietary limitations, and state-level settings.
 
 - **Method**: `POST`
 - **Request Payload Example**:
+
   ```json
   {
     "language": "hi",

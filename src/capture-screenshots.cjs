@@ -77,10 +77,10 @@ async function runCapture() {
     const testEmail = `baseline-user-${Date.now()}@gmail.com`;
     const testPassword = "TestPassword123!";
 
-    await page.fill('input#name', "Test Patient");
-    await page.fill('input#email', testEmail);
-    await page.fill('input#password', testPassword);
-    await page.fill('input#confirmPassword', testPassword);
+    await page.fill("input#name", "Test Patient");
+    await page.fill("input#email", testEmail);
+    await page.fill("input#password", testPassword);
+    await page.fill("input#confirmPassword", testPassword);
 
     console.log("Submitting registration...");
     await page.click('button[type="submit"]');
@@ -92,7 +92,7 @@ async function runCapture() {
 
     // Assessment Step 1 screenshot
     const stepScreenshotPath = (step) => path.join(outputDir, `assessment-step${step}.png`);
-    
+
     console.log("Capturing Assessment Step 1...");
     await page.screenshot({ path: stepScreenshotPath(1), fullPage: true });
 
@@ -121,7 +121,7 @@ async function runCapture() {
     await page.screenshot({ path: stepScreenshotPath(4), fullPage: true });
     console.log("Filling and Submitting Step 4...");
     await page.fill('textarea[name="symptoms"]', "None");
-    
+
     console.log("Submitting wizard assessment...");
     // The button on Step 4 has text containing "Generate Plan"
     await page.click("button:has-text('Generate')");
@@ -145,7 +145,6 @@ async function runCapture() {
     await capture("report", "/report");
 
     console.log("All E2E screenshots successfully captured.");
-
   } catch (err) {
     console.error("Visual regression capture pipeline failed:", err);
   } finally {

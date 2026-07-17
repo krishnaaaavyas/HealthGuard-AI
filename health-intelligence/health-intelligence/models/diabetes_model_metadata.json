@@ -30,10 +30,6 @@
       "fastingBloodSugar",
       "bloodSugarHbA1c"
     ],
-    "categorical": [
-      "gender",
-      "smoking",
-      "exercise"
-    ]
+    "categorical": ["gender", "smoking", "exercise"]
   }
 }

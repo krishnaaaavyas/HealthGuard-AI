@@ -1,11 +1,9 @@
 import { type UserProfile, type CompleteRiskAnalysis } from "../services/risk.service.js";
 
 export interface HeuristicRiskResult {
-  riskCategory: "low" | "moderate" | "high";
-  confidence: number;
+  category: "low" | "moderate" | "high";
+  heuristicVersion: "heuristic-v1";
   supportingFactors: string[];
-  version: "heuristic-v1";
-  explanation: string;
 }
 
 export class ExperimentalRiskHeuristicService {
@@ -187,87 +185,10 @@ export class ExperimentalRiskHeuristicService {
       riskCategory = "moderate";
     }
 
-    // Determine confidence
-    let confidence = 85;
-
-    // Completeness check
-    const checkFields = [
-      profile.age,
-      profile.gender,
-      profile.heightCm,
-      profile.weightKg,
-      profile.smoking,
-      profile.exercise,
-      profile.familyHistory,
-      profile.symptoms,
-      profile.alcohol,
-    ];
-
-    checkFields.forEach((field) => {
-      if (field === undefined || field === null || String(field).trim() === "") {
-        confidence -= 3;
-      }
-    });
-
-    // Clinical agreement check
-    const clinicalLabel = (clinicalRiskResult.overallRiskLabel || "Low").toLowerCase();
-    if (riskCategory === clinicalLabel) {
-      confidence += 10;
-    } else if (
-      (riskCategory === "low" && clinicalLabel === "high") ||
-      (riskCategory === "high" && clinicalLabel === "low")
-    ) {
-      confidence -= 20;
-    } else {
-      confidence -= 5;
-    }
-
-    // Clamp confidence between 50 and 98
-    confidence = Math.max(50, Math.min(98, confidence));
-
-    // Localize explanation
-    let explanation = "";
-    if (riskCategory === "low") {
-      if (lang === "hi") {
-        explanation =
-          "आपकी प्रोफ़ाइल इष्टतम सीमाओं के भीतर मेट्रिक्स के साथ कम जोखिम स्तर का सुझाव देती है। अपनी सक्रिय और संतुलित दिनचर्या बनाए रखना जारी रखें।";
-      } else if (lang === "gu") {
-        explanation =
-          "તમારી પ્રોફાઇલ શ્રેષ્ઠ શ્રેણીમાં મેટ્રિક્સ સાથે નીચા જોખમ સ્તરનું સૂચન કરે છે. તમારી સક્રિય અને સંતુલિત દિનચર્યા જાળવી રાખવાનું ચાલુ રાખો.";
-      } else {
-        explanation =
-          "Your profile suggests a low risk level with metrics within optimal ranges. Continue maintaining your active and balanced routine.";
-      }
-    } else if (riskCategory === "moderate") {
-      if (lang === "hi") {
-        explanation =
-          "आपकी जीवनशैली या बायोमेट्रिक कारकों में कुछ बढ़े हुए संकेतक पाए गए हैं। हम नियमित शारीरिक गतिविधि और संतुलित आहार को शामिल करने की सलाह देते हैं।";
-      } else if (lang === "gu") {
-        explanation =
-          "તમારી જીવનશૈલી અથવા બાયોમેટ્રિક પરિબળોમાં કેટલાક એલિવેટેડ સૂચકાંકો જોવા મળ્યા છે. અમે નિયમિત શારીરિક પ્રવૃત્તિ અને સંતુલિત આહારનો સમાવેશ કરવાની ભલામણ કરીએ છીએ.";
-      } else {
-        explanation =
-          "Some elevated indicators were detected in your lifestyle or biometric factors. We recommend incorporating regular physical activity and a balanced diet.";
-      }
-    } else {
-      if (lang === "hi") {
-        explanation =
-          "आपके नैदानिक स्कोर और जीवनशैली मेट्रिक्स में कई उच्च जोखिम वाले संकेतक पाए गए हैं। हम व्यक्तिगत नैदानिक समीक्षा के लिए स्वास्थ्य पेशेवर से परामर्श करने की दृढ़ सलाह देते हैं।";
-      } else if (lang === "gu") {
-        explanation =
-          "તમારો ક્લિનિકલ સ્કોર અને જીવનશૈલી મેટ્રિક્સમાં બહુવિધ ઉચ્ચ-જોખમ સૂચકાંકો જોવા મળ્યા છે. અમે વ્યક્તિગત નિદાન સમીક્ષા માટે આરોગ્ય વ્યાવસાયિકની સલાહ લેવાની ભારપૂર્વક ભલામણ કરીએ છીએ.";
-      } else {
-        explanation =
-          "Multiple high-risk indicators were detected in your clinical score and lifestyle metrics. We strongly advise consulting a healthcare professional for a personalized diagnostic review.";
-      }
-    }
-
     return {
-      riskCategory,
-      confidence,
+      category: riskCategory,
+      heuristicVersion: "heuristic-v1",
       supportingFactors: factors.slice(0, 3),
-      version: "heuristic-v1",
-      explanation,
     };
   }
 }

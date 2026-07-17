@@ -357,19 +357,23 @@ npm start        # Run production server
 HealthGuard V2 introduces an advanced health-intelligence system supporting detailed biomarker screening, laboratory reports parsing, and localized regional contexts.
 
 ### V2 Phases
+
 - **Phase 0: Baseline, Safety Net & Compatibility** | **Status: ✅ Complete**
 - **Phase 1: Lab Reports OCR & Biomarker Parsing** | Status: 📅 Scheduled
 - **Phase 2: ML-Powered Cardiovascular Risk Models** | Status: 📅 Scheduled
 - **Phase 3: Localized Regional Context Engine** | Status: 📅 Scheduled
 
 ### Feature-Flag Configurations
+
 All V2 capabilities reside behind environment variables and are disabled by default:
+
 - **Frontend (`.env`)**: `VITE_ENABLE_HEALTH_ENGINE_V2=false`
 - **Backend (`backend/.env`)**: `HEALTH_ENGINE_V2_ENABLED=false`
 
 To enable V2 features for testing, change their values to `true` in your local environment files.
 
 ### V2 Documentation References
+
 - [V2 Architecture Design](file:///c:/Users/admin/Documents/Hackathons%20ig/HealthGuard%20AI/docs/architecture-v2.md)
 - [V2 Testing & Baseline Verification](file:///c:/Users/admin/Documents/Hackathons%20ig/HealthGuard%20AI/docs/testing.md)
 - [V2 Rollback Procedures & Legacy Verification](file:///c:/Users/admin/Documents/Hackathons%20ig/HealthGuard%20AI/docs/rollback-v2.md)

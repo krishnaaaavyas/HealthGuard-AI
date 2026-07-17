@@ -7,18 +7,22 @@ This document registers the testing commands, syntax guidelines, and exact basel
 ## 1. Syntax Check & Lint Verification (Baseline Results)
 
 ### Frontend Linter
+
 - **Command**: `npm run lint`
 - **Result**: Passed successfully with `0 errors` and `29 warnings` (warnings relate to fast refresh warnings for icons or helper exports from shadcn/ui components).
 
 ### Frontend Production Compilation
+
 - **Command**: `npm run build`
 - **Result**: Vite production compilation completes successfully in `< 1000ms`, producing clean static assets under `dist/` with no type compiler warnings.
 
 ### Backend Linter
+
 - **Command**: `cd backend && npm run lint`
 - **Result**: Passed with `0 errors`.
 
 ### Backend Type-checking & Build
+
 - **Command**: `cd backend && npm run build`
 - **Result**: `tsc` compilation completes with `0 errors`.
 
@@ -27,13 +31,15 @@ This document registers the testing commands, syntax guidelines, and exact basel
 ## 2. Startup Verification & Automated Tests
 
 ### Backend Server Listener Startup
+
 - **Command**: `cd backend && npm run dev`
 - **Result**: Server successfully boots and listens on `http://localhost:5000` with the connection log:
   `HealthGuard AI Express backend running on http://localhost:5000`
 
 ### Automated Calculations & Routes Integration Suite
+
 - **Command**: `cd backend && npm run test`
-- **Result**: 
+- **Result**:
   - **Clinical Model checks**: Low-risk Profile A, lifestyle Profile B, and high-risk Profile C resolve correctly to expected categories (`low`, `high`).
   - **Food Scanning check**: Personalized sugar and sodium impact scaling categories verified successfully.
   - **Regression Risk Forecasts**: Confirms improving and worsening trends accurately.
@@ -42,5 +48,6 @@ This document registers the testing commands, syntax guidelines, and exact basel
 ---
 
 ## 3. Integration Testing Guidelines (V2)
+
 1. Set `HEALTH_ENGINE_V2_ENABLED=false` inside `backend/.env`. All versioned requests to `/api/v2/*` must resolve to HTTP `503 Service Unavailable` with error payload `HEALTH_ENGINE_V2_DISABLED`.
 2. Set `HEALTH_ENGINE_V2_ENABLED=true`. Submit valid schema variables. Response must resolve to `200 OK` or `500` database errors. Submit invalid inputs (e.g. non-numerical sleep hours). Response must yield `400 Bad Request` containing formatting errors list.

@@ -78,7 +78,10 @@ export type RegionalContextV2 = z.infer<typeof RegionalContextV2Schema>;
 
 export const LabObservationSchema = z.object({
   code: z.string().min(1),
-  value: z.number().finite().refine((val) => val >= 0, { message: "Biomarker values must be positive" }),
+  value: z
+    .number()
+    .finite()
+    .refine((val) => val >= 0, { message: "Biomarker values must be positive" }),
   unit: z.string().min(1),
   observedAt: z.string().datetime(),
   isVerified: z.boolean().default(false),
@@ -132,6 +135,7 @@ export const HealthModuleResultSchema = z.object({
   recommendedActions: z.array(z.string()),
   recommendedTests: z.array(TestRecommendationSchema),
   safetyFlags: z.array(SafetyFlagSchema),
+  experimentalModelUsed: z.boolean().optional(),
 });
 
 export const RegionalContextSchema = z.object({

@@ -48,7 +48,7 @@ async function testV1Invariance() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
       body: JSON.stringify(testPayload),
     });
@@ -70,7 +70,7 @@ async function testV1Invariance() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
       body: JSON.stringify(testPayload),
     });
@@ -88,7 +88,7 @@ async function testV1Invariance() {
     const res = await fetch(`${baseUrl}/api/profile`, {
       method: "GET",
       headers: {
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
     });
     const data: any = await res.json();
@@ -105,7 +105,7 @@ async function testV1Invariance() {
     const res = await fetch(`${baseUrl}/api/dashboard/bootstrap`, {
       method: "GET",
       headers: {
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
     });
     const data: any = await res.json();
@@ -123,7 +123,7 @@ async function testV1Invariance() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
       body: JSON.stringify(testPayload),
     });

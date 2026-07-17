@@ -26,17 +26,30 @@ async function testV2Schemas() {
   const port = address.port;
   const baseUrl = `http://localhost:${port}/api/v2`;
 
+  class SkipTest extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "SkipTest";
+    }
+  }
+
   let testsPassed = 0;
   let testsFailed = 0;
+  let testsSkipped = 0;
 
   const runTest = async (name: string, fn: () => Promise<void>) => {
     try {
       await fn();
       console.log(`✅ Pass: ${name}`);
       testsPassed++;
-    } catch (err) {
-      console.error(`❌ Fail: ${name}`, err);
-      testsFailed++;
+    } catch (err: any) {
+      if (err instanceof SkipTest || (err && err.name === "SkipTest")) {
+        console.log(`⚠️ Skip: ${name} (${err.message})`);
+        testsSkipped++;
+      } else {
+        console.error(`❌ Fail: ${name}`, err);
+        testsFailed++;
+      }
     }
   };
 
@@ -148,7 +161,14 @@ async function testV2Schemas() {
 
   // 5. Registry - Module counts and availability check
   await runTest("Registry - Contains all 6 target modules", async () => {
-    const requiredModules = ["diabetes", "hypertension", "cardiovascular", "kidney", "anaemia", "thyroid"];
+    const requiredModules = [
+      "diabetes",
+      "hypertension",
+      "cardiovascular",
+      "kidney",
+      "anaemia",
+      "thyroid",
+    ];
     for (const modId of requiredModules) {
       const mod = diseaseModuleRegistry[modId];
       if (!mod) {
@@ -164,7 +184,7 @@ async function testV2Schemas() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
       body: JSON.stringify(validContext),
     });
@@ -182,7 +202,7 @@ async function testV2Schemas() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
       body: JSON.stringify(validContext),
     });
@@ -199,7 +219,7 @@ async function testV2Schemas() {
 
     // Verify derived BMI
     const derivedBmi = payload.data.bmi;
-    const expectedBmi = 75 / ((175 / 100) ** 2);
+    const expectedBmi = 75 / (175 / 100) ** 2;
     if (Math.abs(derivedBmi - expectedBmi) > 0.01) {
       throw new Error(`Unexpected BMI: got ${derivedBmi}, expected ${expectedBmi}`);
     }
@@ -223,7 +243,14 @@ async function testV2Schemas() {
         riskTier: "moderate",
         evidenceCompleteness: 0.8,
         confidenceLevel: "moderately-supported",
-        topContributors: [{ factorId: "fastingBloodSugar", name: "Blood Sugar", impactValue: 15, description: "High fasting blood sugar" }],
+        topContributors: [
+          {
+            factorId: "fastingBloodSugar",
+            name: "Blood Sugar",
+            impactValue: 15,
+            description: "High fasting blood sugar",
+          },
+        ],
         protectiveFactors: [],
         missingInputs: [],
         recommendedActions: ["Limit carbs"],
@@ -262,8 +289,26 @@ async function testV2Schemas() {
     (global as any).window = mockWindow;
 
     hydrateHealthStore({
-      profile: { age: 40, gender: "female", heightCm: 160, weightKg: 60, smoking: "never", exercise: "active", familyHistory: "", symptoms: "" },
-      result: { overallScore: 25, overallRisk: "Low", bmi: 23.4, risk: { diabetes: 10, heartDisease: 20, hypertension: 15 }, rationale: { diabetes: "", heartDisease: "", hypertension: "" }, dietPlan: "", exercisePlan: "", preventionTips: "" },
+      profile: {
+        age: 40,
+        gender: "female",
+        heightCm: 160,
+        weightKg: 60,
+        smoking: "never",
+        exercise: "active",
+        familyHistory: "",
+        symptoms: "",
+      },
+      result: {
+        overallScore: 25,
+        overallRisk: "Low",
+        bmi: 23.4,
+        risk: { diabetes: 10, heartDisease: 20, hypertension: 15 },
+        rationale: { diabetes: "", heartDisease: "", hypertension: "" },
+        dietPlan: "",
+        exercisePlan: "",
+        preventionTips: "",
+      },
       history: [],
     });
 
@@ -285,7 +330,9 @@ async function testV2Schemas() {
 
     let fastApiAvailable = false;
     try {
-      const ping = await fetch("http://localhost:8000/health", { signal: AbortSignal.timeout(1000) });
+      const ping = await fetch("http://localhost:8000/health", {
+        signal: AbortSignal.timeout(1000),
+      });
       if (ping.status === 200) {
         fastApiAvailable = true;
       }
@@ -294,15 +341,14 @@ async function testV2Schemas() {
     }
 
     if (!fastApiAvailable) {
-      console.log("⚠️ FastAPI service is offline; skipping live inference router checks.");
-      return;
+      throw new SkipTest("FastAPI service is offline");
     }
 
     const res = await fetch(`${baseUrl}/health-assessment`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
       body: JSON.stringify(validContext),
     });
@@ -313,7 +359,7 @@ async function testV2Schemas() {
 
     const payload: any = await res.json();
     const diabetesResult = payload.data.moduleResults.find((r: any) => r.moduleId === "diabetes");
-    
+
     if (!diabetesResult || diabetesResult.moduleVersion !== "2.0.0") {
       throw new Error(`Expected V2 module results, got: ${JSON.stringify(diabetesResult)}`);
     }
@@ -321,7 +367,7 @@ async function testV2Schemas() {
 
   server.close();
   console.log("==================================================");
-  console.log(`TESTS COMPLETE: ${testsPassed} Passed, ${testsFailed} Failed`);
+  console.log(`TESTS COMPLETE: ${testsPassed} Passed, ${testsFailed} Failed, ${testsSkipped} Skipped`);
   console.log("==================================================");
 
   if (testsFailed > 0) {
