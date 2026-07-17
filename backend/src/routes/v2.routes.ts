@@ -63,7 +63,9 @@ router.post("/health-assessment", requireAuth, async (req: AuthenticatedRequest,
 
   const parsed = HealthContextSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ success: false, error: "Validation Error", details: parsed.error.format() });
+    return res
+      .status(400)
+      .json({ success: false, error: "Validation Error", details: parsed.error.format() });
   }
 
   const context = parsed.data;
@@ -72,7 +74,7 @@ router.post("/health-assessment", requireAuth, async (req: AuthenticatedRequest,
   // Deriving BMI safely
   let bmi = 0;
   if (assessment.heightCm > 0 && assessment.weightKg > 0) {
-    bmi = assessment.weightKg / ((assessment.heightCm / 100) ** 2);
+    bmi = assessment.weightKg / (assessment.heightCm / 100) ** 2;
   }
   if (!isFinite(bmi) || isNaN(bmi) || bmi < 0) {
     bmi = 0;
@@ -88,7 +90,10 @@ router.post("/health-assessment", requireAuth, async (req: AuthenticatedRequest,
       clinicalActionRequired: true,
     });
   }
-  if (assessment.fastingBloodSugar && (assessment.fastingBloodSugar >= 250 || assessment.fastingBloodSugar <= 50)) {
+  if (
+    assessment.fastingBloodSugar &&
+    (assessment.fastingBloodSugar >= 250 || assessment.fastingBloodSugar <= 50)
+  ) {
     safetyFlags.push({
       flagType: "red-flag",
       moduleId: "diabetes",
@@ -127,12 +132,14 @@ router.post("/health-assessment", requireAuth, async (req: AuthenticatedRequest,
           missingInputs: [],
           recommendedActions: [],
           recommendedTests: [],
-          safetyFlags: [{
-            flagType: "data-anomaly",
-            moduleId: module.moduleId,
-            message: `Evaluation failed: ${err.message || String(err)}`,
-            clinicalActionRequired: false,
-          }],
+          safetyFlags: [
+            {
+              flagType: "data-anomaly",
+              moduleId: module.moduleId,
+              message: `Evaluation failed: ${err.message || String(err)}`,
+              clinicalActionRequired: false,
+            },
+          ],
         });
       }
     }
@@ -156,7 +163,12 @@ router.post("/health-assessment", requireAuth, async (req: AuthenticatedRequest,
     });
   } catch (err: any) {
     console.error("V2 health assessment save/evaluate database error:", err);
-    return res.status(500).json({ success: false, error: "Database Error: Failed to save V2 health assessment results" });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        error: "Database Error: Failed to save V2 health assessment results",
+      });
   }
 });
 
@@ -175,7 +187,9 @@ router.get("/health-assessment", requireAuth, async (req: AuthenticatedRequest, 
     return res.json({ success: true, data: docSnap.data() });
   } catch (err: any) {
     console.error("V2 health assessment get error:", err);
-    return res.status(500).json({ success: false, error: "Database Error: Failed to retrieve V2 health assessment" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Database Error: Failed to retrieve V2 health assessment" });
   }
 });
 
@@ -185,7 +199,9 @@ router.post("/lab-reports", requireAuth, async (req: AuthenticatedRequest, res) 
 
   const parsed = LabReportV2Schema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ success: false, error: "Validation Error", details: parsed.error.format() });
+    return res
+      .status(400)
+      .json({ success: false, error: "Validation Error", details: parsed.error.format() });
   }
 
   const uid = req.user?.uid;
@@ -203,7 +219,9 @@ router.post("/lab-reports", requireAuth, async (req: AuthenticatedRequest, res) 
     return res.json({ success: true, message: "V2 Lab report saved successfully.", data });
   } catch (err: any) {
     console.error("V2 lab report save error:", err);
-    return res.status(500).json({ success: false, error: "Database Error: Failed to save V2 lab report" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Database Error: Failed to save V2 lab report" });
   }
 });
 
@@ -220,7 +238,9 @@ router.get("/lab-reports", requireAuth, async (req: AuthenticatedRequest, res) =
     return res.json({ success: true, data: reports });
   } catch (err: any) {
     console.error("V2 lab reports get error:", err);
-    return res.status(500).json({ success: false, error: "Database Error: Failed to retrieve V2 lab reports" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Database Error: Failed to retrieve V2 lab reports" });
   }
 });
 
@@ -230,7 +250,9 @@ router.post("/recommendations", requireAuth, async (req: AuthenticatedRequest, r
 
   const parsed = RecommendationV2Schema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ success: false, error: "Validation Error", details: parsed.error.format() });
+    return res
+      .status(400)
+      .json({ success: false, error: "Validation Error", details: parsed.error.format() });
   }
 
   const uid = req.user?.uid;
@@ -248,7 +270,9 @@ router.post("/recommendations", requireAuth, async (req: AuthenticatedRequest, r
     return res.json({ success: true, message: "V2 Recommendation saved successfully.", data });
   } catch (err: any) {
     console.error("V2 recommendation save error:", err);
-    return res.status(500).json({ success: false, error: "Database Error: Failed to save V2 recommendation" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Database Error: Failed to save V2 recommendation" });
   }
 });
 
@@ -265,7 +289,9 @@ router.get("/recommendations", requireAuth, async (req: AuthenticatedRequest, re
     return res.json({ success: true, data: recs });
   } catch (err: any) {
     console.error("V2 recommendations get error:", err);
-    return res.status(500).json({ success: false, error: "Database Error: Failed to retrieve V2 recommendations" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Database Error: Failed to retrieve V2 recommendations" });
   }
 });
 
@@ -275,7 +301,9 @@ router.post("/regional-context", requireAuth, async (req: AuthenticatedRequest, 
 
   const parsed = RegionalContextV2Schema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ success: false, error: "Validation Error", details: parsed.error.format() });
+    return res
+      .status(400)
+      .json({ success: false, error: "Validation Error", details: parsed.error.format() });
   }
 
   const uid = req.user?.uid;
@@ -293,7 +321,9 @@ router.post("/regional-context", requireAuth, async (req: AuthenticatedRequest, 
     return res.json({ success: true, message: "V2 Regional context saved successfully.", data });
   } catch (err: any) {
     console.error("V2 regional context save error:", err);
-    return res.status(500).json({ success: false, error: "Database Error: Failed to save V2 regional context" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Database Error: Failed to save V2 regional context" });
   }
 });
 
@@ -312,7 +342,9 @@ router.get("/regional-context", requireAuth, async (req: AuthenticatedRequest, r
     return res.json({ success: true, data: docSnap.data() });
   } catch (err: any) {
     console.error("V2 regional context get error:", err);
-    return res.status(500).json({ success: false, error: "Database Error: Failed to retrieve V2 regional context" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Database Error: Failed to retrieve V2 regional context" });
   }
 });
 

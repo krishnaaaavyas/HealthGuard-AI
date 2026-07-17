@@ -59,6 +59,7 @@ export const HealthModuleResultSchema = z.object({
   recommendedActions: z.array(z.string()),
   recommendedTests: z.array(TestRecommendationSchema),
   safetyFlags: z.array(SafetyFlagSchema),
+  experimentalModelUsed: z.boolean().optional(),
 });
 
 export const RegionalContextSchema = z.object({

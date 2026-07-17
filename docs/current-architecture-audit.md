@@ -5,6 +5,7 @@ This document presents a precise, real audit of the current HealthGuard AI codeb
 ---
 
 ## 1. Frontend Structure
+
 - **Core Technology**: React 19 + TypeScript + Vite.
 - **Routing**: TanStack Router (file-based routing). The routes are defined in `src/routes/` using lazy-loading for heavier pages to optimize bundle sizes (e.g. `_app.dashboard.lazy.tsx`, `_app.scanner.lazy.tsx`).
 - **Styling**: Tailwind CSS v4 and Radix UI primitive components.
@@ -16,6 +17,7 @@ This document presents a precise, real audit of the current HealthGuard AI codeb
 ---
 
 ## 2. Backend Structure
+
 - **Core Technology**: Node.js + Express + TypeScript.
 - **Execution / Compilation**: Managed via `tsx watch` for development and compiled to JS using `tsc` for production.
 - **Database/Auth Access**: Firebase Admin SDK. Supports full connection to Firestore and fallback mock mode when credentials are not supplied.
@@ -25,6 +27,7 @@ This document presents a precise, real audit of the current HealthGuard AI codeb
 ---
 
 ## 3. Firebase Configuration
+
 - **Auth**: Firebase Authentication manages clinical and patient logins.
 - **Firestore**: Database layout with collections:
   - `users`: Patient profile records, metadata, and assessment milestones.
@@ -36,6 +39,7 @@ This document presents a precise, real audit of the current HealthGuard AI codeb
 ---
 
 ## 4. Existing Assessment & Calculations
+
 - **Wizard Form**: `src/routes/_app.assessment.lazy.tsx` runs a 4-step health assessment.
 - **Risk Calculation**: Performs clinical evaluations client-side and backend-side using two primary guidelines:
   - **FINDRISC Points Table**: Type 2 Diabetes risk evaluation.
@@ -45,6 +49,7 @@ This document presents a precise, real audit of the current HealthGuard AI codeb
 ---
 
 ## 5. Existing LocalStorage & Sync Architecture
+
 - **Cache Keys**:
   - `hg.profile.v1`: User demographic/physiological profiles.
   - `hg.result.v1`: Calculated risk summaries, AI plans, and diet coaching.
@@ -55,6 +60,7 @@ This document presents a precise, real audit of the current HealthGuard AI codeb
 ---
 
 ## 6. React Query & Testing Setup
+
 - **React Query**: Configured in `src/router.tsx` and wrapped in `src/routes/__root.tsx`, but no active query hooks are used for REST routes.
 - **Tests**:
   - `backend/src/test-runner.ts` tests ML clinical engines.

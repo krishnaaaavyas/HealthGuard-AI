@@ -3,12 +3,14 @@
 This document guides the release, deployment, and monitoring of HealthGuard AI V2 components.
 
 ## 1. Hosting Platforms
+
 - **Frontend App**: Hosted on Vercel. Static React assets compiled via Vite, routed through TanStack Router file-based system.
 - **Backend API**: Hosted on Render. Node/Express instance listening on port 5000 (proxied through https).
 
 ---
 
 ## 2. Release Steps (Phase 1)
+
 1. **Pre-Deployment Auditing**:
    - Run type checks (`npm run build`) and lint verification (`npm run lint`).
 2. **Setup production flags**:

@@ -1,8 +1,4 @@
-import {
-  HealthContext,
-  HealthModuleResult,
-  TestRecommendation,
-} from "./schemas-v2.js";
+import { HealthContext, HealthModuleResult, TestRecommendation } from "./schemas-v2.js";
 import { RiskService } from "../services/risk.service.js";
 
 export interface HealthModule {
@@ -32,7 +28,7 @@ export const diseaseModuleRegistry: Record<string, HealthModule> = {
     evaluate: async (context: HealthContext): Promise<HealthModuleResult> => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const fastApiUrl = process.env.FASTAPI_URL || "http://localhost:8000";
 
       try {
@@ -51,11 +47,13 @@ export const diseaseModuleRegistry: Record<string, HealthModule> = {
 
         const data = await response.json();
         return data as HealthModuleResult;
-
       } catch (err: any) {
         clearTimeout(timeoutId);
-        console.warn("FastAPI diabetes evaluation failed or timed out. Falling back to V1 legacy clinical calculator. Error:", err.message || String(err));
-        
+        console.warn(
+          "FastAPI diabetes evaluation failed or timed out. Falling back to V1 legacy clinical calculator. Error:",
+          err.message || String(err),
+        );
+
         // Execute Legacy Fallback
         const assessment = context.assessment;
         const legacyProfile: any = {
@@ -75,7 +73,8 @@ export const diseaseModuleRegistry: Record<string, HealthModule> = {
           fastingBloodSugar: assessment.fastingBloodSugar || 90,
         };
 
-        const bmi = assessment.heightCm > 0 ? assessment.weightKg / ((assessment.heightCm / 100) ** 2) : 22;
+        const bmi =
+          assessment.heightCm > 0 ? assessment.weightKg / (assessment.heightCm / 100) ** 2 : 22;
         const legacyResult = RiskService.calculateDiabetesRisk(legacyProfile, bmi);
 
         let riskTier: "lower" | "moderate" | "elevated" = "lower";
@@ -86,11 +85,12 @@ export const diseaseModuleRegistry: Record<string, HealthModule> = {
           moduleId: "diabetes",
           moduleVersion: "1.0.0-legacy",
           resultType: "risk-tier",
-          status: "completed",
+          status: "unavailable",
           score: legacyResult.risk,
           riskTier,
           evidenceCompleteness: 0.5,
           confidenceLevel: "preliminary",
+          experimentalModelUsed: false,
           topContributors: legacyResult.factors.map((f) => ({
             factorId: f.name.toLowerCase().includes("bmi") ? "bmi" : "demographics",
             name: f.name,
@@ -113,8 +113,18 @@ export const diseaseModuleRegistry: Record<string, HealthModule> = {
     },
   },
 
-  hypertension: createPlaceholderModule("hypertension", ["age", "gender", "systolicBP", "diastolicBP"], [], []),
-  cardiovascular: createPlaceholderModule("cardiovascular", ["age", "gender", "systolicBP", "fastingBloodSugar"], ["smoking"], ["totalCholesterol", "hdlCholesterol", "ldlCholesterol", "triglycerides"]),
+  hypertension: createPlaceholderModule(
+    "hypertension",
+    ["age", "gender", "systolicBP", "diastolicBP"],
+    [],
+    [],
+  ),
+  cardiovascular: createPlaceholderModule(
+    "cardiovascular",
+    ["age", "gender", "systolicBP", "fastingBloodSugar"],
+    ["smoking"],
+    ["totalCholesterol", "hdlCholesterol", "ldlCholesterol", "triglycerides"],
+  ),
   kidney: createPlaceholderModule("kidney", ["age", "gender"], [], []),
   anaemia: createPlaceholderModule("anaemia", ["age", "gender"], [], []),
   thyroid: createPlaceholderModule("thyroid", ["age", "gender"], [], ["thyroidTSH"]),
@@ -124,7 +134,7 @@ function createPlaceholderModule(
   moduleId: string,
   requiredInputs: string[] = ["age", "gender"],
   optionalInputs: string[] = [],
-  supportedLabCodes: string[] = []
+  supportedLabCodes: string[] = [],
 ): HealthModule {
   return {
     moduleId,

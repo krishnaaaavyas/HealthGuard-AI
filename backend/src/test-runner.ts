@@ -67,8 +67,8 @@ async function runTestRunner() {
   );
   console.log(
     "Profile A (Heuristic Risk Category):",
-    mlA.riskCategory,
-    `(Confidence: ${mlA.confidence}%, Version: ${mlA.version})`,
+    mlA.category,
+    `(Version: ${mlA.heuristicVersion})`,
   );
   console.log("Profile A (Supporting Factors): ", mlA.supportingFactors);
 
@@ -81,8 +81,8 @@ async function runTestRunner() {
   );
   console.log(
     "Profile B (Heuristic Risk Category):",
-    mlB.riskCategory,
-    `(Confidence: ${mlB.confidence}%, Version: ${mlB.version})`,
+    mlB.category,
+    `(Version: ${mlB.heuristicVersion})`,
   );
   console.log("Profile B (Supporting Factors): ", mlB.supportingFactors);
 
@@ -95,8 +95,8 @@ async function runTestRunner() {
   );
   console.log(
     "Profile C (Heuristic Risk Category):",
-    mlC.riskCategory,
-    `(Confidence: ${mlC.confidence}%, Version: ${mlC.version})`,
+    mlC.category,
+    `(Version: ${mlC.heuristicVersion})`,
   );
   console.log("Profile C (Supporting Factors): ", mlC.supportingFactors);
 

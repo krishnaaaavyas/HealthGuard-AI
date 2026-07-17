@@ -65,7 +65,7 @@ async function testV2Routes() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
       body: JSON.stringify({ age: 30 }),
     });
@@ -86,7 +86,7 @@ async function testV2Routes() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
       body: JSON.stringify({
         age: 999, // Invalid age limit
@@ -113,7 +113,7 @@ async function testV2Routes() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer mock-uid-test-user-123",
+        Authorization: "Bearer mock-uid-test-user-123",
       },
       body: JSON.stringify({
         userId: "test-user-123",
