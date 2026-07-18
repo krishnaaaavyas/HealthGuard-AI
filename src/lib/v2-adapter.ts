@@ -2,18 +2,16 @@ import { HealthModuleResult } from "./schemas-v2";
 import { StoredResult } from "./health-store";
 
 export function adaptV2ToLegacy(v2Results: HealthModuleResult[], bmi: number): StoredResult {
-  const diabetesModule = v2Results.find((r) => r.moduleId === "diabetes");
+  const diabetesModule = v2Results.find((r) => r.moduleId === "diabetes" || r.moduleId === "diabetes-screening");
   const cvModule = v2Results.find((r) => r.moduleId === "cardiovascular");
   const hyperModule = v2Results.find((r) => r.moduleId === "hypertension");
 
-  const getRiskScore = (result?: HealthModuleResult): number => {
-    if (!result) return 15;
+  const getRiskScore = (result?: HealthModuleResult): number | undefined => {
+    if (!result) return undefined;
     if (result.status === "completed" && typeof result.score === "number") {
       return result.score;
     }
-    if (result.riskTier === "elevated") return 75;
-    if (result.riskTier === "moderate") return 45;
-    return 15;
+    return undefined;
   };
 
   const diabetesRisk = getRiskScore(diabetesModule);
@@ -22,8 +20,8 @@ export function adaptV2ToLegacy(v2Results: HealthModuleResult[], bmi: number): S
 
   const getExplanation = (result?: HealthModuleResult): string => {
     if (!result) return "Module data is currently unavailable.";
-    if (result.status === "unavailable") return "V2 Module currently unavailable.";
-    if (result.status === "insufficient-data") return "Insufficient data to calculate risk.";
+    if (result.status === "model-unavailable" || result.status === "unavailable") return "V2 Module currently unavailable.";
+    if (result.status === "insufficient-information" || result.status === "insufficient-data") return "Insufficient data to calculate risk.";
     if (result.status === "failed") return "Evaluation module failed.";
     return result.topContributors && result.topContributors.length > 0
       ? `Main signals: ${result.topContributors.map((c) => `${c.name} (${c.impactValue > 0 ? "+" : ""}${c.impactValue})`).join(", ")}.`
@@ -34,9 +32,12 @@ export function adaptV2ToLegacy(v2Results: HealthModuleResult[], bmi: number): S
   const heartRationale = getExplanation(cvModule);
   const hyperRationale = getExplanation(hyperModule);
 
-  const maxRisk = Math.max(diabetesRisk, heartRisk, hyperRisk);
-  const overallScore = Math.round(maxRisk * 0.8);
-  const overallRisk = overallScore < 33 ? "Low" : overallScore < 66 ? "Moderate" : "High";
+  const validRisks = [diabetesRisk, heartRisk, hyperRisk].filter(
+    (s): s is number => typeof s === "number"
+  );
+
+  const overallScore = validRisks.length > 0 ? Math.round(Math.max(...validRisks) * 0.8) : undefined;
+  const overallRisk = overallScore === undefined ? "Unavailable" : (overallScore < 33 ? "Low" : overallScore < 66 ? "Moderate" : "High");
 
   const allContributors = v2Results.flatMap((r) => r.topContributors || []);
   const factors = allContributors.map((c) => ({
@@ -50,26 +51,14 @@ export function adaptV2ToLegacy(v2Results: HealthModuleResult[], bmi: number): S
     estimatedImpact: Math.max(10 - idx * 2, 2),
   }));
 
-  const topContributorsText = allContributors.slice(0, 3).map((c) => c.description || c.name);
-  const mlRisk = {
-    mlRiskCategory: overallRisk.toLowerCase(),
-    modelVersion: "ml-risk-v2-adapter",
-    confidence: 0.95,
-    explanation: `V2 adapter evaluation complete. Overall risk profile categorized as ${overallRisk.toLowerCase()} based on modular evidence integration.`,
-    supportingFactors:
-      topContributorsText.length > 0
-        ? topContributorsText
-        : ["Baseline physiological inputs within normal bounds."],
-  };
-
   return {
-    overallScore,
-    overallRisk,
+    overallScore: overallScore ?? 0,
+    overallRisk: overallRisk as any,
     bmi,
     risk: {
-      diabetes: diabetesRisk,
-      heartDisease: heartRisk,
-      hypertension: hyperRisk,
+      diabetes: diabetesRisk as any,
+      heartDisease: heartRisk as any,
+      hypertension: hyperRisk as any,
     },
     rationale: {
       diabetes: diabetesRationale,
@@ -85,7 +74,6 @@ export function adaptV2ToLegacy(v2Results: HealthModuleResult[], bmi: number): S
         : "Follow general wellness guidelines, limit simple sugars, maintain physical activity, and track daily metrics.",
     factors,
     actionPriorities,
-    mlRisk,
     schemaVersion: 2,
     engineVersion: "v2-adapter",
   };
