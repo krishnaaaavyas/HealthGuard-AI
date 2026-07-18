@@ -9,7 +9,10 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint .",
-    "test": "tsx src/test-runner.ts && tsx src/test-v2-routes.ts && tsx src/test-v2-schemas.ts && tsx src/test-v1-invariance.ts && tsx src/test-security.ts"
+    "test": "npm run test:unit && npm run test:integration && npm run test:security",
+    "test:unit": "tsx src/test-unit.ts",
+    "test:integration": "tsx src/test-v2-routes.ts && tsx src/test-v2-schemas.ts && tsx src/test-v1-invariance.ts",
+    "test:security": "tsx src/test-security.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

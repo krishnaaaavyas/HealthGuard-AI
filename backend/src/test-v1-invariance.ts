@@ -9,6 +9,50 @@ async function testV1Invariance() {
   console.log("HEALTHGUARD AI V1 INVARIANCE & ISOLATION TESTS");
   console.log("==================================================");
 
+  // Set mock API key to force AI service to call Gemini API
+  process.env.GEMINI_API_KEY = "mock-key-for-test";
+
+  // Mock global fetch to capture prompts sent to Gemini
+  let capturedPrompt = "";
+  const originalFetch = global.fetch;
+  global.fetch = async (url: any, options: any) => {
+    const urlStr = typeof url === "string" ? url : (url.url || "");
+    if (urlStr.includes("generativelanguage.googleapis.com")) {
+      const body = JSON.parse(options.body);
+      capturedPrompt = body.contents[0].parts[0].text;
+      
+      // Return a valid mock Gemini response matching FullAdviceSchema
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      risk: { diabetes: 10, heartDisease: 20, hypertension: 15 },
+                      rationale: {
+                        diabetes: "Low risk due to age.",
+                        heartDisease: "Healthy heart indicators.",
+                        hypertension: "Vascular readings within range.",
+                      },
+                      dietPlan: "Custom regional diet plan.",
+                      exercisePlan: "Cardio workout routine.",
+                      preventionTips: "Monitor blood pressure weekly.",
+                    }),
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      } as any;
+    }
+    return originalFetch(url, options);
+  };
+
   // Start listener on a random free port
   const server = app.listen(0);
   const address: any = server.address();
@@ -118,7 +162,7 @@ async function testV1Invariance() {
     }
   });
 
-  // TEST 5: Advice route has no mlRisk
+  // TEST 5: Advice route has no mlRisk & captures/validates prompt
   await runTest("advice route does not return mlRisk", async () => {
     const res = await fetch(`${baseUrl}/api/risk/advice`, {
       method: "POST",
@@ -137,6 +181,21 @@ async function testV1Invariance() {
     }
   });
 
+  // TEST 6: Assert captured Gemini prompt has no experimental ML terms
+  await runTest("Gemini - Prompt contains V1 sections and excludes experimental ML context", async () => {
+    if (!capturedPrompt) {
+      throw new Error("Gemini prompt was not captured/intercepted!");
+    }
+    if (!capturedPrompt.includes("FINDRISC") || !capturedPrompt.includes("Framingham")) {
+      throw new Error("Expected prompt to preserve standard V1 clinical modules");
+    }
+    if (capturedPrompt.includes("mlRisk") || capturedPrompt.includes("confidence")) {
+      throw new Error("Experimental V2 ML variables leaked into Gemini prompt!");
+    }
+  });
+
+  // Restore fetch and close server
+  global.fetch = originalFetch;
   server.close();
 
   console.log("==================================================");

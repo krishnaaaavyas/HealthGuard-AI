@@ -12,7 +12,10 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "vitest run"
+    "test": "vitest run && npm test --prefix backend",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "verify": "npm run lint && npm run build && npm test && npm run test:e2e"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

@@ -63,6 +63,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 1. Listen to Auth changes
   useEffect(() => {
     if (!isConfigured) {
+      const saved = sessionStorage.getItem("hg.mockUser");
+      if (saved) {
+        try {
+          const parsedUser = JSON.parse(saved);
+          const mockUser = {
+            ...parsedUser,
+            getIdToken: async () => parsedUser.uid.startsWith("mock-uid-") ? parsedUser.uid : "mock-uid-" + parsedUser.uid,
+            providerData: [],
+          };
+          setUser(mockUser as any);
+          const localProfile = localStorage.getItem(getScopedKey("hg.profile.v1", mockUser.uid));
+          setHasCompletedAssessment(!!localProfile);
+        } catch (e) {
+          console.error("Failed to restore mock user session:", e);
+        }
+      } else {
+        setUser(null);
+        setHasCompletedAssessment(null);
+      }
       setLoading(false);
       return;
     }
@@ -296,6 +315,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async () => {
     try {
       setLoading(true);
+      if (!isConfigured) {
+        const mockUser = {
+          uid: "mock-uid-google",
+          email: "google-user@example.com",
+          displayName: "Google User",
+          photoURL: null,
+          getIdToken: async () => "mock-uid-google",
+          providerData: [],
+        } as any;
+        setUser(mockUser);
+        sessionStorage.setItem("hg.mockUser", JSON.stringify(mockUser));
+        const localProfile = localStorage.getItem(getScopedKey("hg.profile.v1", mockUser.uid));
+        setHasCompletedAssessment(!!localProfile);
+        toast.success("Successfully signed in with Google (Local Mock Auth)");
+        return;
+      }
       await signInWithPopup(auth, googleProvider);
       toast.success("Successfully signed in with Google");
     } catch (error: unknown) {
@@ -313,6 +348,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithEmail = async (email: string, pass: string) => {
     try {
       setLoading(true);
+      if (!isConfigured) {
+        const mockUser = {
+          uid: "mock-uid-test-user-A",
+          email,
+          displayName: email.split("@")[0],
+          photoURL: null,
+          getIdToken: async () => "mock-uid-test-user-A",
+          providerData: [],
+        } as any;
+        setUser(mockUser);
+        sessionStorage.setItem("hg.mockUser", JSON.stringify(mockUser));
+        const localProfile = localStorage.getItem(getScopedKey("hg.profile.v1", mockUser.uid));
+        setHasCompletedAssessment(!!localProfile);
+        toast.success("Successfully signed in (Local Mock Auth)");
+        return;
+      }
       await signInWithEmailAndPassword(auth, email, pass);
       toast.success("Successfully signed in");
     } catch (error: unknown) {
@@ -337,6 +388,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUpWithEmail = async (email: string, pass: string, name: string) => {
     try {
       setLoading(true);
+      if (!isConfigured) {
+        const mockUid = `mock-uid-${Date.now()}`;
+        const mockUser = {
+          uid: mockUid,
+          email,
+          displayName: name,
+          photoURL: null,
+          getIdToken: async () => mockUid,
+          providerData: [],
+        } as any;
+        setUser(mockUser);
+        sessionStorage.setItem("hg.mockUser", JSON.stringify(mockUser));
+        setHasCompletedAssessment(false);
+        toast.success("Account created successfully (Local Mock Auth)");
+        return;
+      }
       const credential = await createUserWithEmailAndPassword(auth, email, pass);
       await updateProfile(credential.user, { displayName: name });
 
@@ -421,8 +488,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setLoading(true);
-      const uid = auth.currentUser?.uid;
-      await signOut(auth);
+      const uid = user?.uid || auth.currentUser?.uid;
+      sessionStorage.removeItem("hg.mockUser");
+      if (isConfigured) {
+        await signOut(auth);
+      }
+      setUser(null);
+      setHasCompletedAssessment(null);
       // Clear local storage and state for clinical assessment privacy
       localStorage.removeItem(getScopedKey("hg.profile.v1", uid));
       localStorage.removeItem(getScopedKey("hg.result.v1", uid));
