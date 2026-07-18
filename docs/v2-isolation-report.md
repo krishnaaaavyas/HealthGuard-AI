@@ -28,7 +28,7 @@ Below is the classification of files that differ from the stable tag `v1.0.0-pre
 
 ### 2.2. Preserved Experimental V2 Files
 
-- `health-intelligence/` (Python service): FastAPI module training pipelines, synthetic logs generators, and tests.
+- `health-intelligence/` (Python service): FastAPI service endpoints, validation schemas, and regression tests (synthetic prototype removed).
 - `backend/src/config/feature-flags.ts`, `module-registry.ts`, `schemas-v2.ts`: Backend schemas and features for V2.
 - `backend/src/routes/v2.routes.ts`: Versioned routes mounted under `/api/v2/*`.
 - `src/lib/feature-flags.ts`, `src/lib/schemas-v2.ts`, `src/lib/v2-adapter.ts`: V2 schemas, flags, and response adapters.

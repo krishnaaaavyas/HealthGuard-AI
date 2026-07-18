@@ -38,3 +38,11 @@ The four core endpoints introduced in Phase 1:
 
 - **Fallback Database**: V2 schemas are mapped to dedicated Firestore collections (`assessmentsV2`, `labReportsV2`, `recommendationsV2`, `regionalContextV2`). The primary risk models and local structures from V1 are retained as-is, ensuring that if a V2 ML module encounters an error, the platform remains fully functional.
 - **Fail-Soft Logic**: In case of failures, client components display a user-friendly unavailable message instead of crashing the UI, allowing normal navigation and dashboard viewing.
+
+## 4. Model Deployment and Governance Safeguards
+
+- **Decoupled Python Execution**: The Python FastAPI service is designed to run independently of any specific installed model file. If a requested model artifact is missing or not configured, the service responds gracefully with a `model-unavailable` status.
+- **No Fabricated Output**: When a model is absent or unavailable, no score or risk tier is produced or saved. The assessment results are persisted as incomplete/unavailable rather than fabricating scores.
+- **Explicit Installation**: Approved research model artifacts must be explicitly installed and configured (including checksum and lifecycle validation) rather than loaded implicitly or fall back silently.
+- **Strict Isolation from V1**: Legacy V1 calculators and heuristics are strictly isolated. V1 is never used as a hidden V2 fallback or default generator.
+- **Development Lifecycle**: Large-scale dataset training, cohort validation, and full model deployment remain future project phases. All currently running test structures use only isolated, non-production research endpoints.

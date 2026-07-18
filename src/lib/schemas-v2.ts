@@ -37,13 +37,29 @@ export const HealthModuleResultSchema = z.object({
   moduleId: z.string(),
   moduleVersion: z.string(),
   resultType: z.enum([
+    "screening-signal",
+    "measured-status",
+    "lab-pattern",
+    "screening-awareness",
+    "context-only",
+    // Retain backward-compatible parsing:
     "risk-score",
     "risk-tier",
     "screening-eligibility",
-    "lab-pattern",
     "referral-priority",
   ]),
-  status: z.enum(["completed", "insufficient-data", "unavailable", "failed"]),
+  status: z.enum([
+    "completed",
+    "insufficient-information",
+    "outside-intended-population",
+    "conflicting-evidence",
+    "measurement-requires-verification",
+    "model-unavailable",
+    "failed",
+    // Retain backward-compatible parsing:
+    "insufficient-data",
+    "unavailable",
+  ]),
   score: z.number().min(0).max(100).optional(),
   riskTier: z.enum(["lower", "moderate", "elevated"]).optional(),
   evidenceCompleteness: z.number().min(0).max(1),
@@ -60,6 +76,15 @@ export const HealthModuleResultSchema = z.object({
   recommendedTests: z.array(TestRecommendationSchema),
   safetyFlags: z.array(SafetyFlagSchema),
   experimentalModelUsed: z.boolean().optional(),
+
+  // New V2 fields:
+  source: z.enum(["research-model", "clinical-rule", "verified-lab", "regional-dataset"]).optional(),
+  evidenceSupport: z.enum(["insufficient", "preliminary", "supported"]).optional(),
+  reasonCodes: z.array(z.string()).optional(),
+  usedEvidence: z.array(z.string()).optional(),
+  missingEvidence: z.array(z.string()).optional(),
+  limitations: z.array(z.string()).optional(),
+  nextSteps: z.array(z.string()).optional(),
 });
 
 export const RegionalContextSchema = z.object({
@@ -83,15 +108,30 @@ export const HealthContextSchema = z.object({
     symptoms: z.string().max(1000).default(""),
     alcohol: z.enum(["never", "occasional", "heavy"]).default("never"),
     sleepHours: z.number().min(2).max(18).default(7),
-    systolicBP: z.number().min(70).max(220).default(120),
-    diastolicBP: z.number().min(40).max(130).default(80),
-    heartRate: z.number().min(30).max(200).default(72),
+    systolicBP: z.number().min(70).max(220).optional(),
+    diastolicBP: z.number().min(40).max(130).optional(),
+    heartRate: z.number().min(30).max(200).optional(),
     fastingBloodSugar: z.number().min(50).max(400).optional(),
     schemaVersion: z.string().default("2.0.0"),
   }),
   labObservations: z.array(LabObservationSchema).default([]),
   regionalContext: RegionalContextSchema,
   schemaVersion: z.string().default("2.0.0"),
+});
+
+export const ModelArtifactManifestSchema = z.object({
+  modelId: z.string(),
+  modelVersion: z.string(),
+  lifecycleStatus: z.enum(["RESEARCH_ONLY", "VALIDATION_CANDIDATE", "APPROVED_PRODUCTION", "RETIRED"]),
+  datasetId: z.string(),
+  datasetFingerprint: z.string(),
+  targetDefinition: z.string(),
+  featureList: z.array(z.string()),
+  forbiddenFeatureList: z.array(z.string()),
+  trainingTimestamp: z.string().datetime(),
+  evaluationDesign: z.string(),
+  limitations: z.array(z.string()),
+  artifactChecksum: z.string(),
 });
 
 export type LabObservation = z.infer<typeof LabObservationSchema>;
@@ -101,3 +141,4 @@ export type SafetyFlag = z.infer<typeof SafetyFlagSchema>;
 export type HealthModuleResult = z.infer<typeof HealthModuleResultSchema>;
 export type RegionalContext = z.infer<typeof RegionalContextSchema>;
 export type HealthContext = z.infer<typeof HealthContextSchema>;
+export type ModelArtifactManifest = z.infer<typeof ModelArtifactManifestSchema>;

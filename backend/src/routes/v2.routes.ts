@@ -123,7 +123,7 @@ router.post("/health-assessment", requireAuth, async (req: AuthenticatedRequest,
         moduleResults.push({
           moduleId: module.moduleId,
           moduleVersion: module.version,
-          resultType: module.moduleId === "cardiovascular" ? "risk-score" : "risk-tier",
+          resultType: "screening-signal",
           status: "failed",
           evidenceCompleteness: 0,
           confidenceLevel: "insufficient",

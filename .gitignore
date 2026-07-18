@@ -37,8 +37,8 @@ backend/node_modules/
 backend/dist/
 backend/.env
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # Python venv and data cache
 health-intelligence/data/
@@ -46,5 +46,15 @@ health-intelligence/venv/
 health-intelligence/.venv/
 health-intelligence/__pycache__/
 health-intelligence/**/*.pyc
-health-intelligence/models/*.joblib
 health-intelligence/models/*.json
+
+# Research and Raw Datasets
+data/raw/
+data/restricted/
+data/external/
+health-intelligence/data/raw/
+health-intelligence/data/restricted/
+health-intelligence/data/external/
+*.dta
+*.sav
+*.sas7bdat
