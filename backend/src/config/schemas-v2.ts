@@ -195,6 +195,21 @@ export const HealthContextSchema = z.object({
   schemaVersion: z.string().default("2.0.0"),
 });
 
+export const ModelArtifactManifestSchema = z.object({
+  modelId: z.string(),
+  modelVersion: z.string(),
+  lifecycleStatus: z.enum(["RESEARCH_ONLY", "VALIDATION_CANDIDATE", "APPROVED_PRODUCTION", "RETIRED"]),
+  datasetId: z.string(),
+  datasetFingerprint: z.string(),
+  targetDefinition: z.string(),
+  featureList: z.array(z.string()),
+  forbiddenFeatureList: z.array(z.string()),
+  trainingTimestamp: z.string().datetime(),
+  evaluationDesign: z.string(),
+  limitations: z.array(z.string()),
+  artifactChecksum: z.string(),
+});
+
 export type LabObservation = z.infer<typeof LabObservationSchema>;
 export type RiskContributor = z.infer<typeof RiskContributorSchema>;
 export type TestRecommendation = z.infer<typeof TestRecommendationSchema>;
@@ -202,3 +217,4 @@ export type SafetyFlag = z.infer<typeof SafetyFlagSchema>;
 export type HealthModuleResult = z.infer<typeof HealthModuleResultSchema>;
 export type RegionalContext = z.infer<typeof RegionalContextSchema>;
 export type HealthContext = z.infer<typeof HealthContextSchema>;
+export type ModelArtifactManifest = z.infer<typeof ModelArtifactManifestSchema>;
