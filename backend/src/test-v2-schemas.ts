@@ -399,6 +399,115 @@ async function testV2Schemas() {
     }
   });
 
+  // 10b. E2E API - Hypertensive emergency check combinations
+  await runTest("API - Hypertensive emergency safety flag check combinations", async () => {
+    process.env.HEALTH_ENGINE_V2_ENABLED = "true";
+    mockFastApiResponseStatus = 200;
+    mockFastApiResponseData = {
+      moduleId: "diabetes-screening",
+      moduleVersion: "2.0.0",
+      resultType: "screening-signal",
+      status: "completed",
+      score: 30,
+      evidenceCompleteness: 0.5,
+      confidenceLevel: "preliminary",
+      topContributors: [],
+      protectiveFactors: [],
+      missingInputs: [],
+      recommendedActions: [],
+      recommendedTests: [],
+      safetyFlags: [],
+    };
+
+    const runBPTest = async (systolic?: number, diastolic?: number) => {
+      const contextPayload = {
+        userId: "test-user-123",
+        assessment: {
+          age: 35,
+          gender: "male" as const,
+          heightCm: 175,
+          weightKg: 75,
+          smoking: "never" as const,
+          exercise: "moderate" as const,
+          familyHistory: "None",
+          symptoms: "None",
+          alcohol: "never" as const,
+          sleepHours: 7,
+          systolicBP: systolic,
+          diastolicBP: diastolic,
+          schemaVersion: "2.0.0",
+        },
+        labObservations: [],
+        regionalContext: {
+          language: "en" as const,
+          preferredDietaryType: "vegetarian" as const,
+          stateOrRegionCode: "IN",
+          customRegionalRules: [],
+          schemaVersion: "2.0.0",
+        },
+        schemaVersion: "2.0.0",
+      };
+
+      const res = await fetch(`${baseUrl}/health-assessment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer mock-uid-test-user-123",
+        },
+        body: JSON.stringify(contextPayload),
+      });
+
+      if (res.status !== 200) {
+        throw new Error(`Expected HTTP 200, got ${res.status}`);
+      }
+
+      const payload: any = await res.json();
+      return payload.data.safetyFlags.find((f: any) => f.moduleId === "hypertension" && f.flagType === "red-flag");
+    };
+
+    // 1. Both BP values absent
+    const flagAbsent = await runBPTest(undefined, undefined);
+    if (flagAbsent) {
+      throw new Error(`Expected no red-flag for absent BP values, got: ${JSON.stringify(flagAbsent)}`);
+    }
+
+    // 2. Normal supplied values (120/80)
+    const flagNormal = await runBPTest(120, 80);
+    if (flagNormal) {
+      throw new Error(`Expected no red-flag for normal BP, got: ${JSON.stringify(flagNormal)}`);
+    }
+
+    // 3. Systolic only - normal (130)
+    const flagSysOnlyNormal = await runBPTest(130, undefined);
+    if (flagSysOnlyNormal) {
+      throw new Error(`Expected no red-flag for normal systolic-only BP, got: ${JSON.stringify(flagSysOnlyNormal)}`);
+    }
+
+    // 4. Systolic only - emergency (185)
+    const flagSysOnlyEmergency = await runBPTest(185, undefined);
+    if (!flagSysOnlyEmergency || !flagSysOnlyEmergency.message.includes("Systolic blood pressure measured at 185 mmHg")) {
+      throw new Error(`Expected systolic emergency flag, got: ${JSON.stringify(flagSysOnlyEmergency)}`);
+    }
+
+    // 5. Diastolic only - normal (85)
+    const flagDiaOnlyNormal = await runBPTest(undefined, 85);
+    if (flagDiaOnlyNormal) {
+      throw new Error(`Expected no red-flag for normal diastolic-only BP, got: ${JSON.stringify(flagDiaOnlyNormal)}`);
+    }
+
+    // 6. Diastolic only - emergency (125)
+    const flagDiaOnlyEmergency = await runBPTest(undefined, 125);
+    if (!flagDiaOnlyEmergency || !flagDiaOnlyEmergency.message.includes("Diastolic blood pressure measured at 125 mmHg")) {
+      throw new Error(`Expected diastolic emergency flag, got: ${JSON.stringify(flagDiaOnlyEmergency)}`);
+    }
+
+    // 7. Both emergency (185/125)
+    const flagBothEmergency = await runBPTest(185, 125);
+    if (!flagBothEmergency || !flagBothEmergency.message.includes("Blood pressure measured at 185/125 mmHg")) {
+      throw new Error(`Expected BP emergency flag for both high, got: ${JSON.stringify(flagBothEmergency)}`);
+    }
+  });
+
   // 11. Compatibility Adapter
   await runTest("Adapter - adaptV2ToLegacy maps elements correctly", async () => {
     const mockV2Results: any[] = [

@@ -2,7 +2,9 @@ import { HealthModuleResult } from "./schemas-v2";
 import { StoredResult } from "./health-store";
 
 export function adaptV2ToLegacy(v2Results: HealthModuleResult[], bmi: number): StoredResult {
-  const diabetesModule = v2Results.find((r) => r.moduleId === "diabetes" || r.moduleId === "diabetes-screening");
+  const diabetesModule = v2Results.find(
+    (r) => r.moduleId === "diabetes" || r.moduleId === "diabetes-screening",
+  );
   const cvModule = v2Results.find((r) => r.moduleId === "cardiovascular");
   const hyperModule = v2Results.find((r) => r.moduleId === "hypertension");
 
@@ -20,8 +22,10 @@ export function adaptV2ToLegacy(v2Results: HealthModuleResult[], bmi: number): S
 
   const getExplanation = (result?: HealthModuleResult): string => {
     if (!result) return "Module data is currently unavailable.";
-    if (result.status === "model-unavailable" || result.status === "unavailable") return "V2 Module currently unavailable.";
-    if (result.status === "insufficient-information" || result.status === "insufficient-data") return "Insufficient data to calculate risk.";
+    if (result.status === "model-unavailable" || result.status === "unavailable")
+      return "V2 Module currently unavailable.";
+    if (result.status === "insufficient-information" || result.status === "insufficient-data")
+      return "Insufficient data to calculate risk.";
     if (result.status === "failed") return "Evaluation module failed.";
     return result.topContributors && result.topContributors.length > 0
       ? `Main signals: ${result.topContributors.map((c) => `${c.name} (${c.impactValue > 0 ? "+" : ""}${c.impactValue})`).join(", ")}.`
@@ -33,11 +37,19 @@ export function adaptV2ToLegacy(v2Results: HealthModuleResult[], bmi: number): S
   const hyperRationale = getExplanation(hyperModule);
 
   const validRisks = [diabetesRisk, heartRisk, hyperRisk].filter(
-    (s): s is number => typeof s === "number"
+    (s): s is number => typeof s === "number",
   );
 
-  const overallScore = validRisks.length > 0 ? Math.round(Math.max(...validRisks) * 0.8) : undefined;
-  const overallRisk = overallScore === undefined ? "Unavailable" : (overallScore < 33 ? "Low" : overallScore < 66 ? "Moderate" : "High");
+  const overallScore =
+    validRisks.length > 0 ? Math.round(Math.max(...validRisks) * 0.8) : undefined;
+  const overallRisk =
+    overallScore === undefined
+      ? "Unavailable"
+      : overallScore < 33
+        ? "Low"
+        : overallScore < 66
+          ? "Moderate"
+          : "High";
 
   const allContributors = v2Results.flatMap((r) => r.topContributors || []);
   const factors = allContributors.map((c) => ({

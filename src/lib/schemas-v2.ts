@@ -78,7 +78,9 @@ export const HealthModuleResultSchema = z.object({
   experimentalModelUsed: z.boolean().optional(),
 
   // New V2 fields:
-  source: z.enum(["research-model", "clinical-rule", "verified-lab", "regional-dataset"]).optional(),
+  source: z
+    .enum(["research-model", "clinical-rule", "verified-lab", "regional-dataset"])
+    .optional(),
   evidenceSupport: z.enum(["insufficient", "preliminary", "supported"]).optional(),
   reasonCodes: z.array(z.string()).optional(),
   usedEvidence: z.array(z.string()).optional(),
@@ -122,7 +124,12 @@ export const HealthContextSchema = z.object({
 export const ModelArtifactManifestSchema = z.object({
   modelId: z.string(),
   modelVersion: z.string(),
-  lifecycleStatus: z.enum(["RESEARCH_ONLY", "VALIDATION_CANDIDATE", "APPROVED_PRODUCTION", "RETIRED"]),
+  lifecycleStatus: z.enum([
+    "RESEARCH_ONLY",
+    "VALIDATION_CANDIDATE",
+    "APPROVED_PRODUCTION",
+    "RETIRED",
+  ]),
   datasetId: z.string(),
   datasetFingerprint: z.string(),
   targetDefinition: z.string(),
