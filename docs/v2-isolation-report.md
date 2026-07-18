@@ -58,18 +58,18 @@ Search matching references classified under categories:
 - **D. Test** (Verifying Isolation)
 - **E. Legacy Compatibility Handling** (Active filter safety layers)
 
-| Reference Term  | Location                         | Category | Details / Resolution                                    |
-| :-------------- | :------------------------------- | :------- | :------------------------------------------------------ |
-| `mlRisk`        | `backend/src/server.ts:322`      | E        | Ignored on retrieval in dynamic bootstrap filter.       |
-| `mlRisk`        | `backend/src/server.ts:405`      | E        | Ignored on profile endpoint retrieval.                  |
-| `mlRisk`        | `src/lib/health-store.ts:51`     | E        | Discarded on loading old LocalStorage records.          |
-| `mlRisk`        | `src/lib/v2-adapter.ts:54`       | B        | Preserved in V2 experimental adaptor files.             |
-| `MlRiskService` | `backend/src/test-runner.ts`     | D        | Corrected to import `ExperimentalRiskHeuristicService`. |
-| `MlRiskService` | `backend/src/server.ts`          | A        | Removed from legacy route handlers.                     |
-| `modelVersion`  | `backend/src/server.ts`          | A        | Removed from legacy DB persistence records.             |
-| `modelVersion`  | `src/lib/health-store.ts:53`     | E        | Discarded on loading old LocalStorage records.          |
-| `/api/v2`       | `backend/src/server.ts:33`       | B        | Mounted experimental routes separately.                 |
-| `/api/v2`       | `backend/src/test-v2-routes.ts`  | D        | Verifies V2 route service responses.                    |
+| Reference Term  | Location                        | Category | Details / Resolution                                    |
+| :-------------- | :------------------------------ | :------- | :------------------------------------------------------ |
+| `mlRisk`        | `backend/src/server.ts:322`     | E        | Ignored on retrieval in dynamic bootstrap filter.       |
+| `mlRisk`        | `backend/src/server.ts:405`     | E        | Ignored on profile endpoint retrieval.                  |
+| `mlRisk`        | `src/lib/health-store.ts:51`    | E        | Discarded on loading old LocalStorage records.          |
+| `mlRisk`        | `src/lib/v2-adapter.ts:54`      | B        | Preserved in V2 experimental adaptor files.             |
+| `MlRiskService` | `backend/src/test-runner.ts`    | D        | Corrected to import `ExperimentalRiskHeuristicService`. |
+| `MlRiskService` | `backend/src/server.ts`         | A        | Removed from legacy route handlers.                     |
+| `modelVersion`  | `backend/src/server.ts`         | A        | Removed from legacy DB persistence records.             |
+| `modelVersion`  | `src/lib/health-store.ts:53`    | E        | Discarded on loading old LocalStorage records.          |
+| `/api/v2`       | `backend/src/server.ts:33`      | B        | Mounted experimental routes separately.                 |
+| `/api/v2`       | `backend/src/test-v2-routes.ts` | D        | Verifies V2 route service responses.                    |
 
 ---
 

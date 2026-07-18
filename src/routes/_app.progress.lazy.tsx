@@ -175,12 +175,18 @@ function ProgressPage() {
       toast.error(tr("fit_valid_weight_toast", currentLang));
       return;
     }
+    const initiatingUid = auth.currentUser?.uid;
     setLogging(true);
 
     try {
       let idToken = "mock-uid-guest";
       if (auth.currentUser) {
         idToken = await auth.currentUser.getIdToken();
+      }
+
+      if (auth.currentUser?.uid !== initiatingUid) {
+        console.warn("Weight logging aborted: User changed during token retrieval.");
+        return;
       }
 
       const response = await fetch(`${API_URL}/api/progress/log`, {
@@ -191,6 +197,11 @@ function ProgressPage() {
         },
         body: JSON.stringify({ weightKg: w }),
       });
+
+      if (auth.currentUser?.uid !== initiatingUid) {
+        console.warn("Weight logging aborted: User changed during request.");
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();

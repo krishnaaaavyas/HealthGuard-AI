@@ -1,4 +1,5 @@
 process.env.NODE_ENV = "test";
+process.env.ENABLE_MOCK_AUTH = "true";
 
 const { app } = await import("./server.js");
 const { AIService } = await import("./services/ai.service.js");

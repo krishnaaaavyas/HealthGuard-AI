@@ -133,12 +133,17 @@ function Dashboard() {
   // Consolidated Bootstrap Fetch on Mount/Retry
   useEffect(() => {
     let active = true;
+    const initiatingUid = auth.currentUser?.uid;
+    const checkState = () => {
+      return active && auth.currentUser && auth.currentUser.uid === initiatingUid;
+    };
+
     setBootstrapLoading(true);
     setBootstrapError(null);
 
     // If it takes more than 2.5s, display Render container cold start wakeup warning
     const wakingTimer = setTimeout(() => {
-      if (active) setIsWaking(true);
+      if (checkState()) setIsWaking(true);
     }, 2500);
 
     const loadDashboard = async () => {
@@ -150,7 +155,7 @@ function Dashboard() {
         endMeasure("Dashboard Bootstrap");
 
         clearTimeout(wakingTimer);
-        if (!active) return;
+        if (!checkState()) return;
 
         setIsWaking(false);
         setBootstrapLoading(false);
@@ -168,7 +173,7 @@ function Dashboard() {
         }
       } catch (err: any) {
         clearTimeout(wakingTimer);
-        if (!active) return;
+        if (!checkState()) return;
         setIsWaking(false);
         setBootstrapLoading(false);
         console.error("Failed to bootstrap dashboard:", err);
@@ -201,6 +206,7 @@ function Dashboard() {
 
   // Generate fresh AI Coach Nudge (decapsulated from bootstrap)
   const refreshCoachNudge = async () => {
+    const initiatingUid = auth.currentUser?.uid;
     setNudgeRefreshing(true);
     try {
       startMeasure("AI Coach Nudge Refresh");
@@ -209,9 +215,11 @@ function Dashboard() {
       });
       endMeasure("AI Coach Nudge Refresh");
 
-      if (data.success && data.nudge) {
-        setCoachNudge(data.nudge);
-        toast.success("Coach recommendations refreshed successfully.");
+      if (auth.currentUser && auth.currentUser.uid === initiatingUid) {
+        if (data.success && data.nudge) {
+          setCoachNudge(data.nudge);
+          toast.success("Coach recommendations refreshed successfully.");
+        }
       }
     } catch (err) {
       console.error("Failed to generate fresh nudge:", err);

@@ -15,7 +15,13 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { startMeasure, endMeasure } from "@/lib/timing";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-import { useProfile, useHealthResult, useHistory } from "@/lib/health-store";
+import {
+  useProfile,
+  useHealthResult,
+  useHistory,
+  getScopedKey,
+  migrateLegacyData,
+} from "@/lib/health-store";
 import { toast } from "sonner";
 
 interface FirebaseError {
@@ -69,6 +75,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       endMeasure("Firebase Auth Resolution");
 
       if (firebaseUser && isConfigured) {
+        // Safe Compatibility Migration
+        migrateLegacyData(firebaseUser.uid);
+
         // Prevent duplicate background sync runs for same user session
         if (hasSyncedThisSession.current === firebaseUser.uid) {
           console.log("Sync already completed for this session.");
@@ -128,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.warn("[Firestore] Error reading user doc in background:", dbErr);
             // Fallback: check local storage
             try {
-              const localProfile = localStorage.getItem("hg.profile.v1");
+              const localProfile = localStorage.getItem(getScopedKey("hg.profile.v1", uid));
               setHasCompletedAssessment(!!localProfile);
             } catch {
               setHasCompletedAssessment(false);
@@ -160,24 +169,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
               if (data.profile) {
                 // Sync to LocalStorage (writes will trigger custom hg:store event)
-                localStorage.setItem("hg.profile.v1", JSON.stringify(data.profile));
+                localStorage.setItem(
+                  getScopedKey("hg.profile.v1", uid),
+                  JSON.stringify(data.profile),
+                );
                 if (data.result) {
-                  localStorage.setItem("hg.result.v1", JSON.stringify(data.result));
+                  localStorage.setItem(
+                    getScopedKey("hg.result.v1", uid),
+                    JSON.stringify(data.result),
+                  );
                 } else {
-                  localStorage.removeItem("hg.result.v1");
+                  localStorage.removeItem(getScopedKey("hg.result.v1", uid));
                 }
                 if (data.history) {
-                  localStorage.setItem("hg.history.v1", JSON.stringify(data.history));
+                  localStorage.setItem(
+                    getScopedKey("hg.history.v1", uid),
+                    JSON.stringify(data.history),
+                  );
                 } else {
-                  localStorage.removeItem("hg.history.v1");
+                  localStorage.removeItem(getScopedKey("hg.history.v1", uid));
                 }
                 // Notify hooks
                 window.dispatchEvent(new CustomEvent("hg:store"));
               } else {
                 // Backend has no profile: sync current localStorage to backend
-                const localProfile = localStorage.getItem("hg.profile.v1");
-                const localResult = localStorage.getItem("hg.result.v1");
-                const localHistory = localStorage.getItem("hg.history.v1");
+                const localProfile = localStorage.getItem(getScopedKey("hg.profile.v1", uid));
+                const localResult = localStorage.getItem(getScopedKey("hg.result.v1", uid));
+                const localHistory = localStorage.getItem(getScopedKey("hg.history.v1", uid));
 
                 if (localProfile) {
                   const body = {
@@ -345,9 +363,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Create Initial backend profile if we have one
       if (isConfigured) {
         const idToken = await credential.user.getIdToken();
-        const localProfile = localStorage.getItem("hg.profile.v1");
-        const localResult = localStorage.getItem("hg.result.v1");
-        const localHistory = localStorage.getItem("hg.history.v1");
+        const localProfile = localStorage.getItem(
+          getScopedKey("hg.profile.v1", credential.user.uid),
+        );
+        const localResult = localStorage.getItem(getScopedKey("hg.result.v1", credential.user.uid));
+        const localHistory = localStorage.getItem(
+          getScopedKey("hg.history.v1", credential.user.uid),
+        );
 
         if (localProfile) {
           try {
@@ -399,11 +421,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setLoading(true);
+      const uid = auth.currentUser?.uid;
       await signOut(auth);
       // Clear local storage and state for clinical assessment privacy
-      localStorage.removeItem("hg.profile.v1");
-      localStorage.removeItem("hg.result.v1");
-      localStorage.removeItem("hg.history.v1");
+      localStorage.removeItem(getScopedKey("hg.profile.v1", uid));
+      localStorage.removeItem(getScopedKey("hg.result.v1", uid));
+      localStorage.removeItem(getScopedKey("hg.history.v1", uid));
       window.dispatchEvent(new CustomEvent("hg:store"));
       toast.success("Successfully signed out");
     } catch (error: unknown) {

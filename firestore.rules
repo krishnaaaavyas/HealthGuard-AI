@@ -6,20 +6,91 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // 2. Expert messages can be read by authenticated users and created if the sender matches request.auth.uid
+    // 2. Profiles collection
+    match /profiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 3. Assessments collection
+    match /assessments/{assessmentId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // 4. Progress collection
+    match /progress/{progressId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // 5. ProgressLogs collection
+    match /progressLogs/{logId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // 6. Reports collection
+    match /reports/{reportId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // 7. ExpertReviewRequests collection
+    match /expertReviewRequests/{requestId} {
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || resource.data.assignedExpertId == request.auth.uid);
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && (
+        (resource.data.userId == request.auth.uid && request.resource.data.userId == resource.data.userId) ||
+        (resource.data.assignedExpertId == request.auth.uid && request.resource.data.assignedExpertId == resource.data.assignedExpertId)
+      );
+      allow delete: if false;
+    }
+
+    // 8. ExpertMessages collection
     match /expertMessages/{messageId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.senderId == request.auth.uid;
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/expertReviewRequests/$(resource.data.requestId)).data.userId == request.auth.uid ||
+        (get(/databases/$(database)/documents/expertReviewRequests/$(resource.data.requestId)).data.assignedExpertId == request.auth.uid &&
+         get(/databases/$(database)/documents/experts/$(request.auth.uid)).data.verified == true)
+      );
+      allow create: if request.auth != null &&
+        request.resource.data.senderId == request.auth.uid && (
+          (get(/databases/$(database)/documents/expertReviewRequests/$(request.resource.data.requestId)).data.userId == request.auth.uid && request.resource.data.senderRole == 'user') ||
+          (get(/databases/$(database)/documents/expertReviewRequests/$(request.resource.data.requestId)).data.assignedExpertId == request.auth.uid &&
+           get(/databases/$(database)/documents/experts/$(request.auth.uid)).data.verified == true && request.resource.data.senderRole == 'expert')
+        );
       allow update, delete: if false;
     }
 
-    // 3. Feedback can be created by anyone, but not read/modified
+    // 9. Experts collection
+    match /experts/{expertId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == expertId &&
+        (!request.resource.data.keys().contains('verified') || request.resource.data.verified == false);
+      allow update: if request.auth != null && request.auth.uid == expertId &&
+        (request.resource.data.verified == resource.data.verified);
+      allow delete: if false;
+    }
+
+    // 10. LabReportsV2 collection
+    match /labReportsV2/{reportId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // 11. RecommendationsV2 collection
+    match /recommendationsV2/{recId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // 12. Feedback can be created by anyone, but not read/modified
     match /feedback/{feedbackId} {
       allow create: if true;
       allow read, update, delete: if false;
     }
 
-    // 4. Default deny all other client access to protect data privacy
+    // 13. Default deny all other client access to protect data privacy
     match /{document=**} {
       allow read, write: if false;
     }

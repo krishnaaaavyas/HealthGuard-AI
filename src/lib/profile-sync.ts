@@ -1,6 +1,7 @@
 import { auth, db, isConfigured } from "./firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
+import { getScopedKey } from "./health-store";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -45,7 +46,7 @@ export const profileSyncService = {
     };
 
     const currentHash = cyrb53(JSON.stringify(payload));
-    const lastSyncedHash = localStorage.getItem("hg.last-synced-hash.v1");
+    const lastSyncedHash = localStorage.getItem(getScopedKey("hg.last-synced-hash.v1", uid));
 
     // Deduplicate: if snapshot is unchanged from last successful sync, skip upload
     if (currentHash === lastSyncedHash) {
@@ -61,7 +62,7 @@ export const profileSyncService = {
     };
 
     // Store in LocalStorage to prevent loss on refresh or close
-    localStorage.setItem("hg.pending-sync.v1", JSON.stringify(pending));
+    localStorage.setItem(getScopedKey("hg.pending-sync.v1", uid), JSON.stringify(pending));
     console.log("[ProfileSync] Queued profile change for background sync.");
 
     // Debounce the background sync to aggregate multiple updates within 2 seconds
@@ -79,10 +80,23 @@ export const profileSyncService = {
   async triggerSync() {
     if (isSyncing) return;
 
-    const rawPending = localStorage.getItem("hg.pending-sync.v1");
+    const initiatingUid = auth.currentUser?.uid;
+    if (!initiatingUid) {
+      console.log("[ProfileSync] No authenticated user found. Waiting for login.");
+      return;
+    }
+
+    const pendingSyncKey = getScopedKey("hg.pending-sync.v1", initiatingUid);
+    const rawPending = localStorage.getItem(pendingSyncKey);
     if (!rawPending) return;
 
     const pending: PendingSync = JSON.parse(rawPending);
+
+    // Mismatched user check
+    if (pending.uid !== initiatingUid) {
+      console.warn("[ProfileSync] Mismatching pending-sync UID detected. Aborting sync.");
+      return;
+    }
 
     // If client is offline, wait for navigator recovery
     if (!navigator.onLine) {
@@ -90,23 +104,17 @@ export const profileSyncService = {
       return;
     }
 
-    const uid = auth.currentUser?.uid;
-    if (!uid) {
-      console.log("[ProfileSync] No authenticated user found. Waiting for login.");
-      return;
-    }
-
-    // Resolve user mismatch if uid was empty when queued
-    if (pending.uid !== uid) {
-      pending.uid = uid;
-      localStorage.setItem("hg.pending-sync.v1", JSON.stringify(pending));
-    }
+    const checkState = () => {
+      return auth.currentUser && auth.currentUser.uid === initiatingUid;
+    };
 
     isSyncing = true;
     console.log("[ProfileSync] Starting background sync process...");
 
     try {
       const idToken = await auth.currentUser.getIdToken();
+
+      if (!checkState()) return;
 
       // 1. Sync profile and results with Express backend
       const backendResp = await fetch(`${API_URL}/api/profile`, {
@@ -123,15 +131,17 @@ export const profileSyncService = {
       }
       console.log("[ProfileSync] Backend Express synchronization successful.");
 
+      if (!checkState()) return;
+
       // 2. Sync assessment completion state with Firestore users collection
       if (isConfigured) {
-        const userRef = doc(db, "users", uid);
+        const userRef = doc(db, "users", initiatingUid);
         const userSnap = await getDoc(userRef);
         const exists = userSnap.exists();
         const userData = exists ? userSnap.data() : null;
 
         const updateData: Record<string, any> = {
-          uid,
+          uid: initiatingUid,
           email: auth.currentUser.email,
           displayName: auth.currentUser.displayName || null,
           hasCompletedAssessment: true,
@@ -142,9 +152,13 @@ export const profileSyncService = {
           updateData.assessmentCompletedAt = serverTimestamp();
         }
 
+        if (!checkState()) return;
+
         await setDoc(userRef, updateData, { merge: true });
         console.log("[ProfileSync] Firestore user synchronization successful.");
       }
+
+      if (!checkState()) return;
 
       // 3. Trigger asynchronous AI advice generation in the background (non-blocking for standard profile sync)
       fetch(`${API_URL}/api/risk/advice`, {
@@ -159,8 +173,10 @@ export const profileSyncService = {
           if (resp.ok) return resp.json();
         })
         .then((data) => {
+          if (!checkState()) return;
           if (data && data.success && data.advice) {
-            const currentResult = localStorage.getItem("hg.result.v1");
+            const resultKey = getScopedKey("hg.result.v1", initiatingUid);
+            const currentResult = localStorage.getItem(resultKey);
             if (currentResult) {
               const parsed = JSON.parse(currentResult);
               parsed.rationale = data.advice.rationale;
@@ -168,7 +184,7 @@ export const profileSyncService = {
               parsed.exercisePlan = data.advice.exercisePlan;
               parsed.preventionTips = data.advice.preventionTips;
               parsed.isAiEnriched = true;
-              localStorage.setItem("hg.result.v1", JSON.stringify(parsed));
+              localStorage.setItem(resultKey, JSON.stringify(parsed));
               window.dispatchEvent(new CustomEvent("hg:store"));
               console.log("[ProfileSync] AI recommendations generated & merged successfully.");
             }
@@ -178,16 +194,21 @@ export const profileSyncService = {
           console.warn("[ProfileSync] Non-fatal background AI advice generation failure:", err);
         });
 
+      if (!checkState()) return;
+
       // Clear successful sync from queue
-      localStorage.removeItem("hg.pending-sync.v1");
-      localStorage.setItem("hg.last-synced-hash.v1", pending.hash);
+      localStorage.removeItem(pendingSyncKey);
+      localStorage.setItem(getScopedKey("hg.last-synced-hash.v1", initiatingUid), pending.hash);
       isSyncing = false;
       console.log("[ProfileSync] Synchronization completed successfully.");
     } catch (err) {
       console.error("[ProfileSync] Sync attempt failed:", err);
       isSyncing = false;
+
+      if (!checkState()) return;
+
       pending.attempts += 1;
-      localStorage.setItem("hg.pending-sync.v1", JSON.stringify(pending));
+      localStorage.setItem(pendingSyncKey, JSON.stringify(pending));
 
       // Calculate exponential backoff (e.g. 5s, 10s, 20s, up to 60s max)
       const backoffMs = Math.min(5000 * Math.pow(2, pending.attempts - 1), 60000);

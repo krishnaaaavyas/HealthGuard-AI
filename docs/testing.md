@@ -51,3 +51,18 @@ This document registers the testing commands, syntax guidelines, and exact basel
 
 1. Set `HEALTH_ENGINE_V2_ENABLED=false` inside `backend/.env`. All versioned requests to `/api/v2/*` must resolve to HTTP `503 Service Unavailable` with error payload `HEALTH_ENGINE_V2_DISABLED`.
 2. Set `HEALTH_ENGINE_V2_ENABLED=true`. Submit valid schema variables. Response must resolve to `200 OK` or `500` database errors. Submit invalid inputs (e.g. non-numerical sleep hours). Response must yield `400 Bad Request` containing formatting errors list.
+
+---
+
+## 4. Phase A2 Security Verification
+
+To verify authentication, cross-user isolation, and expert Review authorization boundaries, run the automated security test suite:
+
+- **Command**: `cd backend && npm test`
+- **Result**: Asserts that:
+  - Missing authorization tokens return HTTP `401`.
+  - Unverified/tampered JWT tokens return HTTP `401` or `500` safely.
+  - Mock authentication is strictly disabled by default.
+  - Profiles are query-isolated under the verified token UID.
+  - Expert Review messages GET/POST are restricted to the request owner and assigned verified expert (returning `403` otherwise).
+  - Message sender role derivation is handled server-side to prevent forgery.

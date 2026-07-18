@@ -454,11 +454,17 @@ To enable V2 features for testing, change their values to `true` in your local e
 ### Running Tests
 
 ```bash
+# Frontend unit tests
+npm test
+
 # Frontend linting
 npm run lint
 
 # Format code
 npm run format
+
+# Backend unit, integration, and security tests
+cd backend && npm test
 
 # Backend linting
 cd backend && npm run lint

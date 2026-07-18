@@ -2,6 +2,8 @@ import express from "express";
 import v2Routes from "./routes/v2.routes.js";
 
 async function testV2Routes() {
+  process.env.ENABLE_MOCK_AUTH = "true";
+  process.env.NODE_ENV = "test";
   console.log("==================================================");
   console.log("HEALTHGUARD AI V2 ROUTING INTEGRATION TESTS");
   console.log("==================================================");

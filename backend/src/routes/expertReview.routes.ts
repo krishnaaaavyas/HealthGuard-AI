@@ -98,7 +98,7 @@ router.post("/request", requireAuth, async (req: AuthenticatedRequest, res: Resp
       requestId: docRef.id,
     });
   } catch (err: any) {
-    console.error("Error creating expert review request:", err);
+    console.error("Error creating expert review request:", err.message);
     return res.status(500).json({ error: "Internal Server Error: Failed to request review" });
   }
 });
@@ -131,7 +131,7 @@ router.get("/my-requests", requireAuth, async (req: AuthenticatedRequest, res: R
       requests,
     });
   } catch (err: any) {
-    console.error("Error fetching my requests:", err);
+    console.error("Error fetching my requests:", err.message);
     return res.status(500).json({ error: "Internal Server Error: Failed to fetch requests" });
   }
 });
@@ -180,7 +180,7 @@ router.patch(
         message: "Request cancelled successfully",
       });
     } catch (err: any) {
-      console.error("Error cancelling request:", err);
+      console.error("Error cancelling request:", err.message);
       return res.status(500).json({ error: "Internal Server Error: Failed to cancel request" });
     }
   },
@@ -215,7 +215,7 @@ router.get(
         requests,
       });
     } catch (err: any) {
-      console.error("Error fetching pending requests:", err);
+      console.error("Error fetching pending requests:", err.message);
       return res
         .status(500)
         .json({ error: "Internal Server Error: Failed to fetch pending reviews" });
@@ -255,7 +255,7 @@ router.get(
         requests: active,
       });
     } catch (err: any) {
-      console.error("Error fetching active expert reviews:", err);
+      console.error("Error fetching active expert reviews:", err.message);
       return res.status(500).json({ error: "Failed to fetch active reviews" });
     }
   },
@@ -306,7 +306,7 @@ router.patch(
         assignedExpertName: expertName,
       });
     } catch (err: any) {
-      console.error("Error accepting request:", err);
+      console.error("Error accepting request:", err.message);
       return res.status(500).json({ error: "Internal Server Error: Failed to accept request" });
     }
   },
@@ -359,7 +359,7 @@ router.patch(
         message: "Review marked as completed successfully",
       });
     } catch (err: any) {
-      console.error("Error completing review:", err);
+      console.error("Error completing review:", err.message);
       return res.status(500).json({ error: "Internal Server Error: Failed to complete review" });
     }
   },
@@ -378,6 +378,14 @@ router.post(
       return res.status(400).json({ error: "Bad Request: Missing User UID" });
     }
 
+    const isMockSignupAllowed =
+      process.env.ENABLE_MOCK_EXPERT_SIGNUP === "true" &&
+      (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test");
+
+    if (!isMockSignupAllowed) {
+      return res.status(403).json({ error: "Forbidden: Mock expert registration is disabled." });
+    }
+
     try {
       const name = req.body.name || req.user?.name || "Mock Specialist";
       const email = req.body.email || req.user?.email || `${uid}@healthguard-ai.mock`;
@@ -392,6 +400,7 @@ router.post(
         role,
         specialization,
         verified: true,
+        isDevelopmentOnly: true,
         createdAt: new Date().toISOString(),
       });
 
@@ -401,7 +410,7 @@ router.post(
         expert: { uid, name, role, specialization },
       });
     } catch (err: any) {
-      console.error("Error registering mock expert:", err);
+      console.error("Error registering mock expert:", err.message);
       return res.status(500).json({ error: "Internal Server Error: Failed to register expert" });
     }
   },
@@ -416,7 +425,36 @@ router.get(
   requireAuth,
   async (req: AuthenticatedRequest, res: Response) => {
     const { requestId } = req.params;
+    const uid = req.user?.uid;
+    if (!uid) {
+      return res.status(401).json({ error: "Unauthorized: Missing user authentication" });
+    }
+
     try {
+      const requestDoc = await db.collection("expertReviewRequests").doc(requestId).get();
+      if (!requestDoc.exists) {
+        return res.status(404).json({ error: "Not Found: Request not found" });
+      }
+      const requestData = requestDoc.data();
+
+      // Check if user is owner
+      const isPatient = requestData.userId === uid;
+
+      // Check if user is assigned verified expert
+      let isExpert = false;
+      if (requestData.assignedExpertId === uid) {
+        const expertDoc = await db.collection("experts").doc(uid).get();
+        if (expertDoc.exists && expertDoc.data()?.verified === true) {
+          isExpert = true;
+        }
+      }
+
+      if (!isPatient && !isExpert) {
+        return res
+          .status(403)
+          .json({ error: "Forbidden: You are not authorized to view messages for this request" });
+      }
+
       const querySnap = await db
         .collection("expertMessages")
         .where("requestId", "==", requestId)
@@ -443,7 +481,7 @@ router.get(
         messages,
       });
     } catch (err: any) {
-      console.error("Error fetching messages:", err);
+      console.error("Error fetching messages:", err.message);
       return res.status(500).json({ error: "Internal Server Error: Failed to fetch messages" });
     }
   },
@@ -459,17 +497,44 @@ router.post(
   async (req: AuthenticatedRequest, res: Response) => {
     const { requestId } = req.params;
     const uid = req.user?.uid;
-    const { message, senderRole } = req.body;
+    const { message } = req.body;
 
-    if (!uid || !message || !senderRole) {
-      return res.status(400).json({ error: "Bad Request: Missing message or senderRole" });
+    if (!uid || !message) {
+      return res.status(400).json({ error: "Bad Request: Missing message content" });
     }
 
     try {
+      const requestDoc = await db.collection("expertReviewRequests").doc(requestId).get();
+      if (!requestDoc.exists) {
+        return res.status(404).json({ error: "Not Found: Request not found" });
+      }
+      const requestData = requestDoc.data();
+
+      // Check if user is owner
+      const isPatient = requestData.userId === uid;
+
+      // Check if user is assigned verified expert
+      let isExpert = false;
+      if (requestData.assignedExpertId === uid) {
+        const expertDoc = await db.collection("experts").doc(uid).get();
+        if (expertDoc.exists && expertDoc.data()?.verified === true) {
+          isExpert = true;
+        }
+      }
+
+      if (!isPatient && !isExpert) {
+        return res
+          .status(403)
+          .json({ error: "Forbidden: You are not authorized to send messages to this request" });
+      }
+
+      // Derive sender role from trusted server-side records
+      const senderRole = isPatient ? "user" : "expert";
+
       const newMessage = {
         requestId,
         senderId: uid,
-        senderRole, // "user" | "expert"
+        senderRole,
         message,
         createdAt: new Date().toISOString(),
       };
@@ -482,7 +547,7 @@ router.post(
         message: { id: docRef.id, ...newMessage },
       });
     } catch (err: any) {
-      console.error("Error sending message:", err);
+      console.error("Error sending message:", err.message);
       return res.status(500).json({ error: "Internal Server Error: Failed to send message" });
     }
   },

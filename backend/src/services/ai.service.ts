@@ -240,7 +240,6 @@ export class AIService {
       .map((td) => `- ${td.factor} (${td.contribution}% contribution)`)
       .join("\n");
 
-
     const targetLang = langName[profile.language] || "English";
     const prompt = `You are a clinical wellness coach explaining health assessments.
 We have run clinical models (FINDRISC for Diabetes, Framingham for CVD and Hypertension) and got:

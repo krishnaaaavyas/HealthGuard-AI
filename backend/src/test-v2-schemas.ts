@@ -13,6 +13,8 @@ import { adaptV2ToLegacy } from "../../src/lib/v2-adapter.js";
 import { hydrateHealthStore } from "../../src/lib/health-store.js";
 
 async function testV2Schemas() {
+  process.env.ENABLE_MOCK_AUTH = "true";
+  process.env.NODE_ENV = "test";
   console.log("==================================================");
   console.log("HEALTHGUARD AI V2 SCHEMA & REGISTRATION INTEGRATION TESTS");
   console.log("==================================================");
@@ -314,7 +316,11 @@ async function testV2Schemas() {
 
     delete (global as any).window;
 
-    if (!storage["hg.profile.v1"] || !storage["hg.result.v1"] || !storage["hg.history.v1"]) {
+    if (
+      !storage["hg.profile.v1:guest"] ||
+      !storage["hg.result.v1:guest"] ||
+      !storage["hg.history.v1:guest"]
+    ) {
       throw new Error(`Missing expected localStorage keys.`);
     }
 

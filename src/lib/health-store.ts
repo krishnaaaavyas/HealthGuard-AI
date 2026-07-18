@@ -1,11 +1,31 @@
 import { useEffect, useState, useCallback } from "react";
 import type { HealthResult } from "./health.functions";
 import type { Lang } from "./i18n";
+import { auth } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
-const KEY_RESULT = "hg.result.v1";
-const KEY_PROFILE = "hg.profile.v1";
-const KEY_HISTORY = "hg.history.v1";
-const KEY_LANG = "hg.lang.v1";
+export const KEY_RESULT = "hg.result.v1";
+export const KEY_PROFILE = "hg.profile.v1";
+export const KEY_HISTORY = "hg.history.v1";
+export const KEY_LANG = "hg.lang.v1";
+
+export function getScopedKey(
+  baseKey: string,
+  uid: string | null = auth.currentUser?.uid || null,
+): string {
+  if (baseKey === KEY_LANG) return baseKey;
+  if (!uid) return `${baseKey}:guest`;
+  return `${baseKey}:${uid}`;
+}
+
+const authListeners = new Set<() => void>();
+
+if (typeof window !== "undefined") {
+  onAuthStateChanged(auth, (user) => {
+    window.dispatchEvent(new CustomEvent("hg:store", { detail: { key: "all" } }));
+    authListeners.forEach((lis) => lis());
+  });
+}
 
 export type Profile = {
   age: number;
@@ -71,13 +91,13 @@ function read<T>(key: string): T | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
 
-    if (key === KEY_PROFILE) {
+    if (key.startsWith(KEY_PROFILE)) {
       return readProfileCompatibility(parsed) as unknown as T;
     }
-    if (key === KEY_RESULT) {
+    if (key.startsWith(KEY_RESULT)) {
       return readStoredResultCompatibility(parsed) as unknown as T;
     }
-    if (key === KEY_HISTORY && Array.isArray(parsed)) {
+    if (key.startsWith(KEY_HISTORY) && Array.isArray(parsed)) {
       return parsed.map(readHistoryEntryCompatibility) as unknown as T;
     }
 
@@ -98,12 +118,32 @@ function write<T>(key: string, value: T | null) {
   }
 }
 
-function useStored<T>(key: string): [T | null, (value: T | null) => void] {
-  const [val, setVal] = useState<T | null>(() => read<T>(key));
+function useStored<T>(baseKey: string): [T | null, (value: T | null) => void] {
+  const [uid, setUid] = useState<string | null>(() => auth.currentUser?.uid || null);
+
+  useEffect(() => {
+    const onAuth = () => {
+      setUid(auth.currentUser?.uid || null);
+    };
+    authListeners.add(onAuth);
+    return () => {
+      authListeners.delete(onAuth);
+    };
+  }, []);
+
+  const scopedKey = getScopedKey(baseKey, uid);
+  const [val, setVal] = useState<T | null>(() => read<T>(scopedKey));
+
+  useEffect(() => {
+    setVal(read<T>(scopedKey));
+  }, [scopedKey]);
+
   useEffect(() => {
     const sync = (e: Event) => {
       const detail = (e as CustomEvent).detail as { key?: string } | undefined;
-      if (!detail || detail.key === key || detail.key === "all") setVal(read<T>(key));
+      if (!detail || detail.key === scopedKey || detail.key === "all") {
+        setVal(read<T>(scopedKey));
+      }
     };
     window.addEventListener("hg:store", sync);
     window.addEventListener("storage", sync);
@@ -111,14 +151,16 @@ function useStored<T>(key: string): [T | null, (value: T | null) => void] {
       window.removeEventListener("hg:store", sync);
       window.removeEventListener("storage", sync);
     };
-  }, [key]);
+  }, [scopedKey]);
+
   const setter = useCallback(
     (v: T | null) => {
-      write(key, v);
+      write(scopedKey, v);
       setVal(v);
     },
-    [key],
+    [scopedKey],
   );
+
   return [val, setter];
 }
 
@@ -138,8 +180,9 @@ export function useLangPref(): [Lang, (l: Lang) => void] {
 }
 
 export function pushHistory(entry: HistoryEntry) {
-  const cur = read<HistoryEntry[]>(KEY_HISTORY) ?? [];
-  write(KEY_HISTORY, [...cur, entry]);
+  const key = getScopedKey(KEY_HISTORY);
+  const cur = read<HistoryEntry[]>(key) ?? [];
+  write(key, [...cur, entry]);
 }
 
 export function hydrateHealthStore(data: {
@@ -148,21 +191,101 @@ export function hydrateHealthStore(data: {
   history?: HistoryEntry[] | null;
 }) {
   if (typeof window === "undefined") return;
+  const uid = auth.currentUser?.uid || null;
   try {
     if (data.profile !== undefined) {
-      if (data.profile === null) window.localStorage.removeItem(KEY_PROFILE);
-      else window.localStorage.setItem(KEY_PROFILE, JSON.stringify(data.profile));
+      const key = getScopedKey(KEY_PROFILE, uid);
+      if (data.profile === null) window.localStorage.removeItem(key);
+      else window.localStorage.setItem(key, JSON.stringify(data.profile));
     }
     if (data.result !== undefined) {
-      if (data.result === null) window.localStorage.removeItem(KEY_RESULT);
-      else window.localStorage.setItem(KEY_RESULT, JSON.stringify(data.result));
+      const key = getScopedKey(KEY_RESULT, uid);
+      if (data.result === null) window.localStorage.removeItem(key);
+      else window.localStorage.setItem(key, JSON.stringify(data.result));
     }
     if (data.history !== undefined) {
-      if (data.history === null) window.localStorage.removeItem(KEY_HISTORY);
-      else window.localStorage.setItem(KEY_HISTORY, JSON.stringify(data.history));
+      const key = getScopedKey(KEY_HISTORY, uid);
+      if (data.history === null) window.localStorage.removeItem(key);
+      else window.localStorage.setItem(key, JSON.stringify(data.history));
     }
     window.dispatchEvent(new CustomEvent("hg:store", { detail: { key: "all" } }));
   } catch (err) {
     console.warn("hydrateHealthStore failed:", err);
+  }
+}
+
+export function migrateLegacyData(uid: string) {
+  if (typeof window === "undefined" || !uid) return;
+
+  // 1. Process hg.pending-sync.v1 (which has an explicit owner UID)
+  try {
+    const rawPending = window.localStorage.getItem("hg.pending-sync.v1");
+    if (rawPending) {
+      const pending = JSON.parse(rawPending);
+      if (pending && pending.uid) {
+        if (pending.uid === uid) {
+          const scopedKey = `hg.pending-sync.v1:${uid}`;
+          window.localStorage.setItem(scopedKey, rawPending);
+          const verified = window.localStorage.getItem(scopedKey);
+          if (verified === rawPending) {
+            window.localStorage.removeItem("hg.pending-sync.v1");
+            console.log(`[Migration] Successfully migrated hg.pending-sync.v1 to ${scopedKey}`);
+          }
+        } else {
+          console.warn(
+            `[Migration] Ignoring legacy pending-sync belonging to another UID: ${pending.uid}`,
+          );
+        }
+      } else {
+        const quarantineKey = `quarantine.hg.pending-sync.v1:${Date.now()}`;
+        window.localStorage.setItem(quarantineKey, rawPending);
+        window.localStorage.removeItem("hg.pending-sync.v1");
+        console.warn(`[Migration] Quarantine: legacy pending-sync had absent ownership.`);
+      }
+    }
+  } catch (err: any) {
+    console.error("[Migration] Error migrating legacy pending-sync:", err.message);
+  }
+
+  // 2. Process other legacy keys (which have absent ownership)
+  const legacyKeys = ["hg.profile.v1", "hg.result.v1", "hg.history.v1", "hg.last-synced-hash.v1"];
+  for (const key of legacyKeys) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (raw) {
+        let ownerUid: string | null = null;
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            ownerUid = parsed.uid || parsed.userId || null;
+          }
+        } catch (e) {
+          // Ignore JSON parsing errors for compatibility checks
+        }
+
+        if (ownerUid) {
+          if (ownerUid === uid) {
+            const scopedKey = `${key}:${uid}`;
+            window.localStorage.setItem(scopedKey, raw);
+            const verified = window.localStorage.getItem(scopedKey);
+            if (verified === raw) {
+              window.localStorage.removeItem(key);
+              console.log(`[Migration] Successfully migrated ${key} to ${scopedKey}`);
+            }
+          } else {
+            console.warn(
+              `[Migration] Ignoring legacy ${key} belonging to another UID: ${ownerUid}`,
+            );
+          }
+        } else {
+          const quarantineKey = `quarantine.${key}:${Date.now()}`;
+          window.localStorage.setItem(quarantineKey, raw);
+          window.localStorage.removeItem(key);
+          console.warn(`[Migration] Quarantine: legacy ${key} has absent ownership.`);
+        }
+      }
+    } catch (err: any) {
+      console.error(`[Migration] Error migrating legacy key ${key}:`, err.message);
+    }
   }
 }

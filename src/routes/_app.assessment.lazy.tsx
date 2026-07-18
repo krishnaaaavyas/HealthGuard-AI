@@ -39,6 +39,7 @@ import {
   pushHistory,
   useLangPref,
   type Profile,
+  getScopedKey,
 } from "@/lib/health-store";
 import { tr } from "@/lib/i18n";
 import { z } from "zod";
@@ -83,6 +84,7 @@ function AssessmentPage() {
   const pct = (step / total) * 100;
 
   async function submit(values: Profile) {
+    const initiatingUid = auth.currentUser?.uid || "guest";
     setLoading(true);
     try {
       const res = (await assessHealth({
@@ -94,6 +96,12 @@ function AssessmentPage() {
           language: lang,
         },
       })) as HealthResult & { bmi: number };
+
+      const currentUid = auth.currentUser?.uid || "guest";
+      if (currentUid !== initiatingUid) {
+        console.warn("Assessment submit aborted: User switched accounts during calculation.");
+        return;
+      }
 
       // 1. Save profile, result, and history locally
       setProfile(values);
@@ -108,7 +116,8 @@ function AssessmentPage() {
       };
       pushHistory(newHistoryEntry);
 
-      const localHistoryRaw = localStorage.getItem("hg.history.v1");
+      const historyKey = getScopedKey("hg.history.v1", currentUid === "guest" ? null : currentUid);
+      const localHistoryRaw = localStorage.getItem(historyKey);
       const historyList = localHistoryRaw ? JSON.parse(localHistoryRaw) : [];
 
       // 2. Update the auth context state and navigate to the dashboard instantly

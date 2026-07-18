@@ -97,6 +97,7 @@ function subscribeToMessages(requestId: string, onUpdate: (messages: any[]) => v
 function setupPolling(requestId: string, onUpdate: (messages: any[]) => void) {
   let active = true;
   const poll = async () => {
+    const initiatingUid = auth.currentUser?.uid;
     try {
       let idToken = "mock-uid-guest";
       if (auth.currentUser) {
@@ -107,7 +108,7 @@ function setupPolling(requestId: string, onUpdate: (messages: any[]) => void) {
           Authorization: `Bearer ${idToken}`,
         },
       });
-      if (res.ok && active) {
+      if (res.ok && active && auth.currentUser?.uid === initiatingUid) {
         const data = await res.json();
         if (data.success) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
