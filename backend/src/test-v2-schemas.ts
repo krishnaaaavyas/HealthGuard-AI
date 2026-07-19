@@ -195,10 +195,47 @@ async function testV2Schemas() {
     }
   });
 
-  // 7. E2E API - V1 Fallback verification
-  await runTest("API - POST /health-assessment falls back to legacy clinical scoring", async () => {
+  // Setup Mock FastAPI server
+  const mockFastApiApp = express();
+  mockFastApiApp.use(express.json());
+
+  let mockFastApiResponseStatus = 200;
+  let mockFastApiResponseData: any = {};
+  let mockFastApiDelay = 0;
+  let lastReceivedFastApiBody: any = null;
+
+  mockFastApiApp.post("/v1/modules/diabetes/evaluate", async (req, res) => {
+    lastReceivedFastApiBody = req.body;
+    if (mockFastApiDelay > 0) {
+      await new Promise((resolve) => setTimeout(resolve, mockFastApiDelay));
+    }
+    res.status(mockFastApiResponseStatus).json(mockFastApiResponseData);
+  });
+
+  const fastApiServer = mockFastApiApp.listen(0);
+  const fastApiPort = (fastApiServer.address() as any).port;
+  process.env.FASTAPI_URL = `http://localhost:${fastApiPort}`;
+
+  // 7. E2E API - FastAPI Timeout produces model-unavailable
+  await runTest("API - POST /health-assessment returns model-unavailable on FastAPI timeout", async () => {
     process.env.HEALTH_ENGINE_V2_ENABLED = "true";
-    process.env.FASTAPI_URL = "http://localhost:8999"; // invalid offline url to trigger fallback
+    mockFastApiResponseStatus = 200;
+    mockFastApiResponseData = {
+      moduleId: "diabetes-screening",
+      moduleVersion: "2.0.0",
+      resultType: "screening-signal",
+      status: "completed",
+      score: 65,
+      evidenceCompleteness: 0.8,
+      confidenceLevel: "preliminary",
+      topContributors: [],
+      protectiveFactors: [],
+      missingInputs: [],
+      recommendedActions: [],
+      recommendedTests: [],
+      safetyFlags: [],
+    };
+    mockFastApiDelay = 6000; // greater than 5s timeout
 
     const res = await fetch(`${baseUrl}/health-assessment`, {
       method: "POST",
@@ -210,41 +247,278 @@ async function testV2Schemas() {
     });
 
     if (res.status !== 200) {
-      const text = await res.text();
-      throw new Error(`Expected HTTP 200, got ${res.status}. Body: ${text}`);
+      throw new Error(`Expected HTTP 200, got ${res.status}`);
     }
 
     const payload: any = await res.json();
-    if (!payload.success) {
-      throw new Error(`Expected success = true, got ${JSON.stringify(payload)}`);
+    const diabetesResult = payload.data.moduleResults.find((r: any) => r.moduleId === "diabetes-screening");
+    if (!diabetesResult || diabetesResult.status !== "model-unavailable") {
+      throw new Error(`Expected status model-unavailable, got: ${JSON.stringify(diabetesResult)}`);
     }
-
-    // Verify derived BMI
-    const derivedBmi = payload.data.bmi;
-    const expectedBmi = 75 / (175 / 100) ** 2;
-    if (Math.abs(derivedBmi - expectedBmi) > 0.01) {
-      throw new Error(`Unexpected BMI: got ${derivedBmi}, expected ${expectedBmi}`);
-    }
-
-    // Verify fallback version indicator is set on saved result
-    const diabetesResult = payload.data.moduleResults.find((r: any) => r.moduleId === "diabetes");
-    if (!diabetesResult || diabetesResult.moduleVersion !== "1.0.0-legacy") {
-      throw new Error(`Expected legacy module fallback, got: ${JSON.stringify(diabetesResult)}`);
+    if (diabetesResult.score !== undefined || diabetesResult.riskTier !== undefined) {
+      throw new Error(`Expected no score or risk tier on unavailable module, got: ${JSON.stringify(diabetesResult)}`);
     }
   });
 
-  // 8. Compatibility Adapter
+  // 8. E2E API - FastAPI 500 produces model-unavailable
+  await runTest("API - POST /health-assessment returns model-unavailable on FastAPI 500", async () => {
+    process.env.HEALTH_ENGINE_V2_ENABLED = "true";
+    mockFastApiResponseStatus = 500;
+    mockFastApiDelay = 0;
+
+    const res = await fetch(`${baseUrl}/health-assessment`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer mock-uid-test-user-123",
+      },
+      body: JSON.stringify(validContext),
+    });
+
+    if (res.status !== 200) {
+      throw new Error(`Expected HTTP 200, got ${res.status}`);
+    }
+
+    const payload: any = await res.json();
+    const diabetesResult = payload.data.moduleResults.find((r: any) => r.moduleId === "diabetes-screening");
+    if (!diabetesResult || diabetesResult.status !== "model-unavailable") {
+      throw new Error(`Expected status model-unavailable, got: ${JSON.stringify(diabetesResult)}`);
+    }
+  });
+
+  // 9. E2E API - Invalid model JSON response is rejected
+  await runTest("API - POST /health-assessment returns model-unavailable on invalid FastAPI JSON/schema", async () => {
+    process.env.HEALTH_ENGINE_V2_ENABLED = "true";
+    mockFastApiResponseStatus = 200;
+    mockFastApiResponseData = { invalidKey: "invalidValue" }; // Invalid response schema
+
+    const res = await fetch(`${baseUrl}/health-assessment`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer mock-uid-test-user-123",
+      },
+      body: JSON.stringify(validContext),
+    });
+
+    if (res.status !== 200) {
+      throw new Error(`Expected HTTP 200, got ${res.status}`);
+    }
+
+    const payload: any = await res.json();
+    const diabetesResult = payload.data.moduleResults.find((r: any) => r.moduleId === "diabetes-screening");
+    if (!diabetesResult || diabetesResult.status !== "model-unavailable") {
+      throw new Error(`Expected status model-unavailable, got: ${JSON.stringify(diabetesResult)}`);
+    }
+  });
+
+  // 10. E2E API - Missing glucose/BP remains missing and no assumed defaults are inserted
+  await runTest("API - Missing physiological variables remain missing with no defaults", async () => {
+    process.env.HEALTH_ENGINE_V2_ENABLED = "true";
+    mockFastApiResponseStatus = 200;
+    mockFastApiResponseData = {
+      moduleId: "diabetes-screening",
+      moduleVersion: "2.0.0",
+      resultType: "screening-signal",
+      status: "completed",
+      score: 30,
+      evidenceCompleteness: 0.5,
+      confidenceLevel: "preliminary",
+      topContributors: [],
+      protectiveFactors: [],
+      missingInputs: [],
+      recommendedActions: [],
+      recommendedTests: [],
+      safetyFlags: [],
+    };
+
+    const sparseAssessment = {
+      age: 35,
+      gender: "male" as const,
+      heightCm: 175,
+      weightKg: 75,
+      smoking: "never" as const,
+      exercise: "moderate" as const,
+      familyHistory: "None",
+      symptoms: "None",
+      alcohol: "never" as const,
+      sleepHours: 7,
+      schemaVersion: "2.0.0",
+    }; // fastingBloodSugar, systolicBP, diastolicBP, heartRate are completely omitted
+
+    const sparseContext = {
+      userId: "test-user-123",
+      assessment: sparseAssessment,
+      labObservations: [],
+      regionalContext: {
+        language: "en" as const,
+        preferredDietaryType: "vegetarian" as const,
+        stateOrRegionCode: "IN",
+        customRegionalRules: [],
+        schemaVersion: "2.0.0",
+      },
+      schemaVersion: "2.0.0",
+    };
+
+    const res = await fetch(`${baseUrl}/health-assessment`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer mock-uid-test-user-123",
+      },
+      body: JSON.stringify(sparseContext),
+    });
+
+    if (res.status !== 200) {
+      throw new Error(`Expected HTTP 200, got ${res.status}`);
+    }
+
+    if (!lastReceivedFastApiBody) {
+      throw new Error("FastAPI did not receive evaluation payload");
+    }
+
+    const sentAssessment = lastReceivedFastApiBody.assessment;
+    if (
+      sentAssessment.fastingBloodSugar !== undefined ||
+      sentAssessment.systolicBP !== undefined ||
+      sentAssessment.diastolicBP !== undefined ||
+      sentAssessment.heartRate !== undefined
+    ) {
+      throw new Error(`Fabricated default physiological variables were sent: ${JSON.stringify(sentAssessment)}`);
+    }
+
+    const payload: any = await res.json();
+    const savedAssessment = payload.data.assessment;
+    if (
+      savedAssessment.fastingBloodSugar !== undefined ||
+      savedAssessment.systolicBP !== undefined ||
+      savedAssessment.diastolicBP !== undefined ||
+      savedAssessment.heartRate !== undefined
+    ) {
+      throw new Error(`Assumed defaults were saved in result: ${JSON.stringify(savedAssessment)}`);
+    }
+  });
+
+  // 10b. E2E API - Hypertensive emergency check combinations
+  await runTest("API - Hypertensive emergency safety flag check combinations", async () => {
+    process.env.HEALTH_ENGINE_V2_ENABLED = "true";
+    mockFastApiResponseStatus = 200;
+    mockFastApiResponseData = {
+      moduleId: "diabetes-screening",
+      moduleVersion: "2.0.0",
+      resultType: "screening-signal",
+      status: "completed",
+      score: 30,
+      evidenceCompleteness: 0.5,
+      confidenceLevel: "preliminary",
+      topContributors: [],
+      protectiveFactors: [],
+      missingInputs: [],
+      recommendedActions: [],
+      recommendedTests: [],
+      safetyFlags: [],
+    };
+
+    const runBPTest = async (systolic?: number, diastolic?: number) => {
+      const contextPayload = {
+        userId: "test-user-123",
+        assessment: {
+          age: 35,
+          gender: "male" as const,
+          heightCm: 175,
+          weightKg: 75,
+          smoking: "never" as const,
+          exercise: "moderate" as const,
+          familyHistory: "None",
+          symptoms: "None",
+          alcohol: "never" as const,
+          sleepHours: 7,
+          systolicBP: systolic,
+          diastolicBP: diastolic,
+          schemaVersion: "2.0.0",
+        },
+        labObservations: [],
+        regionalContext: {
+          language: "en" as const,
+          preferredDietaryType: "vegetarian" as const,
+          stateOrRegionCode: "IN",
+          customRegionalRules: [],
+          schemaVersion: "2.0.0",
+        },
+        schemaVersion: "2.0.0",
+      };
+
+      const res = await fetch(`${baseUrl}/health-assessment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer mock-uid-test-user-123",
+        },
+        body: JSON.stringify(contextPayload),
+      });
+
+      if (res.status !== 200) {
+        throw new Error(`Expected HTTP 200, got ${res.status}`);
+      }
+
+      const payload: any = await res.json();
+      return payload.data.safetyFlags.find((f: any) => f.moduleId === "hypertension" && f.flagType === "red-flag");
+    };
+
+    // 1. Both BP values absent
+    const flagAbsent = await runBPTest(undefined, undefined);
+    if (flagAbsent) {
+      throw new Error(`Expected no red-flag for absent BP values, got: ${JSON.stringify(flagAbsent)}`);
+    }
+
+    // 2. Normal supplied values (120/80)
+    const flagNormal = await runBPTest(120, 80);
+    if (flagNormal) {
+      throw new Error(`Expected no red-flag for normal BP, got: ${JSON.stringify(flagNormal)}`);
+    }
+
+    // 3. Systolic only - normal (130)
+    const flagSysOnlyNormal = await runBPTest(130, undefined);
+    if (flagSysOnlyNormal) {
+      throw new Error(`Expected no red-flag for normal systolic-only BP, got: ${JSON.stringify(flagSysOnlyNormal)}`);
+    }
+
+    // 4. Systolic only - emergency (185)
+    const flagSysOnlyEmergency = await runBPTest(185, undefined);
+    if (!flagSysOnlyEmergency || !flagSysOnlyEmergency.message.includes("Systolic blood pressure measured at 185 mmHg")) {
+      throw new Error(`Expected systolic emergency flag, got: ${JSON.stringify(flagSysOnlyEmergency)}`);
+    }
+
+    // 5. Diastolic only - normal (85)
+    const flagDiaOnlyNormal = await runBPTest(undefined, 85);
+    if (flagDiaOnlyNormal) {
+      throw new Error(`Expected no red-flag for normal diastolic-only BP, got: ${JSON.stringify(flagDiaOnlyNormal)}`);
+    }
+
+    // 6. Diastolic only - emergency (125)
+    const flagDiaOnlyEmergency = await runBPTest(undefined, 125);
+    if (!flagDiaOnlyEmergency || !flagDiaOnlyEmergency.message.includes("Diastolic blood pressure measured at 125 mmHg")) {
+      throw new Error(`Expected diastolic emergency flag, got: ${JSON.stringify(flagDiaOnlyEmergency)}`);
+    }
+
+    // 7. Both emergency (185/125)
+    const flagBothEmergency = await runBPTest(185, 125);
+    if (!flagBothEmergency || !flagBothEmergency.message.includes("Blood pressure measured at 185/125 mmHg")) {
+      throw new Error(`Expected BP emergency flag for both high, got: ${JSON.stringify(flagBothEmergency)}`);
+    }
+  });
+
+  // 11. Compatibility Adapter
   await runTest("Adapter - adaptV2ToLegacy maps elements correctly", async () => {
     const mockV2Results: any[] = [
       {
-        moduleId: "diabetes",
+        moduleId: "diabetes-screening",
         moduleVersion: "2.0.0",
-        resultType: "risk-tier",
+        resultType: "screening-signal",
         status: "completed",
         score: 65,
-        riskTier: "moderate",
         evidenceCompleteness: 0.8,
-        confidenceLevel: "moderately-supported",
+        confidenceLevel: "preliminary",
         topContributors: [
           {
             factorId: "fastingBloodSugar",
@@ -259,15 +533,35 @@ async function testV2Schemas() {
         recommendedTests: [],
         safetyFlags: [],
       },
+      {
+        moduleId: "hypertension",
+        moduleVersion: "2.0.0",
+        resultType: "screening-signal",
+        status: "model-unavailable",
+        evidenceCompleteness: 0,
+        confidenceLevel: "insufficient",
+        topContributors: [],
+        protectiveFactors: [],
+        missingInputs: [],
+        recommendedActions: [],
+        recommendedTests: [],
+        safetyFlags: [],
+      }
     ];
 
     const adapted = adaptV2ToLegacy(mockV2Results, 24.5);
     if (adapted.risk.diabetes !== 65) {
       throw new Error(`Expected diabetes risk 65, got ${adapted.risk.diabetes}`);
     }
+    if (adapted.risk.hypertension !== undefined) {
+      throw new Error(`Expected hypertension risk to be undefined, got ${adapted.risk.hypertension}`);
+    }
+    if ((adapted as any).mlRisk !== undefined) {
+      throw new Error(`Expected legacy mlRisk field to not be exposed, got ${JSON.stringify((adapted as any).mlRisk)}`);
+    }
   });
 
-  // 9. Atomic Hydration
+  // 12. Atomic Hydration
   await runTest("Hydration - hydrateHealthStore writes atomically", async () => {
     const storage: Record<string, string> = {};
     let eventsDispatched = 0;
@@ -329,49 +623,8 @@ async function testV2Schemas() {
     }
   });
 
-  // 10. E2E API - Live FastAPI evaluation
-  await runTest("API - POST /health-assessment evaluates via live FastAPI service", async () => {
-    process.env.HEALTH_ENGINE_V2_ENABLED = "true";
-    process.env.FASTAPI_URL = "http://localhost:8000";
-
-    let fastApiAvailable = false;
-    try {
-      const ping = await fetch("http://localhost:8000/health", {
-        signal: AbortSignal.timeout(1000),
-      });
-      if (ping.status === 200) {
-        fastApiAvailable = true;
-      }
-    } catch {
-      // Offline
-    }
-
-    if (!fastApiAvailable) {
-      throw new SkipTest("FastAPI service is offline");
-    }
-
-    const res = await fetch(`${baseUrl}/health-assessment`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer mock-uid-test-user-123",
-      },
-      body: JSON.stringify(validContext),
-    });
-
-    if (res.status !== 200) {
-      throw new Error(`Expected HTTP 200, got ${res.status}`);
-    }
-
-    const payload: any = await res.json();
-    const diabetesResult = payload.data.moduleResults.find((r: any) => r.moduleId === "diabetes");
-
-    if (!diabetesResult || diabetesResult.moduleVersion !== "2.0.0") {
-      throw new Error(`Expected V2 module results, got: ${JSON.stringify(diabetesResult)}`);
-    }
-  });
-
   server.close();
+  fastApiServer.close();
   console.log("==================================================");
   console.log(
     `TESTS COMPLETE: ${testsPassed} Passed, ${testsFailed} Failed, ${testsSkipped} Skipped`,

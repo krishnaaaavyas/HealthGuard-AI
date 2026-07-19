@@ -82,11 +82,38 @@ router.post("/health-assessment", requireAuth, async (req: AuthenticatedRequest,
 
   // Check red-flags
   const safetyFlags: SafetyFlag[] = [];
-  if (assessment.systolicBP >= 180 || assessment.diastolicBP >= 120) {
+
+  const sys = assessment.systolicBP;
+  const dia = assessment.diastolicBP;
+
+  const hasValidSys = typeof sys === "number" && isFinite(sys);
+  const hasValidDia = typeof dia === "number" && isFinite(dia);
+
+  let isBPEmergency = false;
+  let bpAlertMessage = "";
+
+  if (hasValidSys && hasValidDia) {
+    if (sys >= 180 || dia >= 120) {
+      isBPEmergency = true;
+      bpAlertMessage = `Hypertensive emergency alert: Blood pressure measured at ${sys}/${dia} mmHg. Seek immediate medical attention.`;
+    }
+  } else if (hasValidSys) {
+    if (sys >= 180) {
+      isBPEmergency = true;
+      bpAlertMessage = `Hypertensive emergency alert: Systolic blood pressure measured at ${sys} mmHg. Seek immediate medical attention.`;
+    }
+  } else if (hasValidDia) {
+    if (dia >= 120) {
+      isBPEmergency = true;
+      bpAlertMessage = `Hypertensive emergency alert: Diastolic blood pressure measured at ${dia} mmHg. Seek immediate medical attention.`;
+    }
+  }
+
+  if (isBPEmergency) {
     safetyFlags.push({
       flagType: "red-flag",
       moduleId: "hypertension",
-      message: `Hypertensive emergency alert: Blood pressure measured at ${assessment.systolicBP}/${assessment.diastolicBP} mmHg. Seek immediate medical attention.`,
+      message: bpAlertMessage,
       clinicalActionRequired: true,
     });
   }
@@ -123,7 +150,7 @@ router.post("/health-assessment", requireAuth, async (req: AuthenticatedRequest,
         moduleResults.push({
           moduleId: module.moduleId,
           moduleVersion: module.version,
-          resultType: module.moduleId === "cardiovascular" ? "risk-score" : "risk-tier",
+          resultType: "screening-signal",
           status: "failed",
           evidenceCompleteness: 0,
           confidenceLevel: "insufficient",

@@ -1,5 +1,4 @@
-import { HealthContext, HealthModuleResult, TestRecommendation } from "./schemas-v2.js";
-import { RiskService } from "../services/risk.service.js";
+import { HealthContext, HealthModuleResult, TestRecommendation, HealthModuleResultSchema } from "./schemas-v2.js";
 
 export interface HealthModule {
   moduleId: string;
@@ -46,60 +45,40 @@ export const diseaseModuleRegistry: Record<string, HealthModule> = {
         }
 
         const data = await response.json();
-        return data as HealthModuleResult;
+
+        // Use the synchronized Zod response schema.
+        const parsed = HealthModuleResultSchema.safeParse(data);
+        if (!parsed.success) {
+          console.warn("FastAPI diabetes response validation failed:", parsed.error.format());
+          throw new Error("Invalid model-service response schema");
+        }
+
+        return parsed.data;
       } catch (err: any) {
         clearTimeout(timeoutId);
         console.warn(
-          "FastAPI diabetes evaluation failed or timed out. Falling back to V1 legacy clinical calculator. Error:",
+          "FastAPI diabetes evaluation failed, timed out, or returned invalid JSON. Returning model-unavailable.",
           err.message || String(err),
         );
 
-        // Execute Legacy Fallback
-        const assessment = context.assessment;
-        const legacyProfile: any = {
-          age: assessment.age,
-          gender: assessment.gender,
-          heightCm: assessment.heightCm,
-          weightKg: assessment.weightKg,
-          smoking: assessment.smoking,
-          exercise: assessment.exercise,
-          familyHistory: assessment.familyHistory,
-          symptoms: assessment.symptoms,
-          alcohol: assessment.alcohol,
-          sleepHours: assessment.sleepHours,
-          systolicBP: assessment.systolicBP,
-          diastolicBP: assessment.diastolicBP,
-          heartRate: assessment.heartRate,
-          fastingBloodSugar: assessment.fastingBloodSugar || 90,
-        };
-
-        const bmi =
-          assessment.heightCm > 0 ? assessment.weightKg / (assessment.heightCm / 100) ** 2 : 22;
-        const legacyResult = RiskService.calculateDiabetesRisk(legacyProfile, bmi);
-
-        let riskTier: "lower" | "moderate" | "elevated" = "lower";
-        if (legacyResult.level === "Moderate") riskTier = "moderate";
-        if (legacyResult.level === "High") riskTier = "elevated";
-
         return {
-          moduleId: "diabetes",
-          moduleVersion: "1.0.0-legacy",
-          resultType: "risk-tier",
-          status: "unavailable",
-          score: legacyResult.risk,
-          riskTier,
-          evidenceCompleteness: 0.5,
-          confidenceLevel: "preliminary",
-          experimentalModelUsed: false,
-          topContributors: legacyResult.factors.map((f) => ({
-            factorId: f.name.toLowerCase().includes("bmi") ? "bmi" : "demographics",
-            name: f.name,
-            impactValue: f.impact,
-            description: f.name,
-          })),
+          moduleId: "diabetes-screening",
+          moduleVersion: "unassigned",
+          status: "model-unavailable",
+          resultType: "screening-signal",
+          source: "research-model",
+          evidenceSupport: "insufficient",
+          reasonCodes: ["MODEL_SERVICE_UNAVAILABLE"],
+          usedEvidence: [],
+          missingEvidence: [],
+          limitations: ["NO_APPROVED_MODEL_RESULT"],
+          nextSteps: ["RETRY_LATER"],
+          evidenceCompleteness: 0,
+          confidenceLevel: "insufficient",
+          topContributors: [],
           protectiveFactors: [],
-          missingInputs: ["bloodSugarHbA1c"],
-          recommendedActions: ["Follow basic clinical nutrition advice and monitor progress."],
+          missingInputs: [],
+          recommendedActions: [],
           recommendedTests: [],
           safetyFlags: [],
         };

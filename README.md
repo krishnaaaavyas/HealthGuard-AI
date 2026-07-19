@@ -601,7 +601,7 @@ HealthGuard AI is open source and available under the MIT License.
 
 ## Experimental Health Intelligence V2
 
-The V2 machine-learning pipeline is currently under development and is not connected to the production V1 user flow.
+The V2 machine-learning pipeline is currently under development. The synthetic diabetes-data and prototype model have been removed from the repository. The Python FastAPI microservice is preserved but returns a structured `model-unavailable` state until a clinically validated dataset is approved and integrated in a later phase.
 
 The stable V1 MVP continues to use its existing risk-assessment and Gemini recommendation architecture.
 
@@ -615,7 +615,7 @@ V2 code is isolated behind backend boundaries and disabled by default. No V2 res
 - **FastAPI Python Service**:
   - Located in `health-intelligence/`
   - Runs on port 8000
-  - V1 backend calls it only if enabled via feature flags. Otherwise, it uses V1 clinical scoring.
+  - The endpoints `/health`, `/ready`, and `/v1/modules/diabetes/evaluate` remain active but return `model-unavailable` signals. V1 backend uses V1 clinical scoring.
 
 ---
 
